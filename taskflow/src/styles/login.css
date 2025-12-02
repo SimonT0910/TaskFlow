@@ -1,0 +1,123 @@
+/*Elemento raiz con las diferentes variables para el fondo*/
+:root{
+    --bg-1: #0d0d0d;
+    --card-bg: rgba(20,20,20,0.72);
+    --accent: #00f0ff;
+    --muted: #9aa0a6;
+}
+
+/*Es importante incluir esto para que se incluya el ancho y alto de la pagina*/
+*{box-sizing: border-box}
+html,body,#root{height:100%}
+
+/*Partes claves para el cuerpo de la pagina con fuentes, degradado y color para texto*/
+body {
+    margin: 0;
+    background: radial-gradient(circle at top, #111111, #000000);
+    font-family: "Poppins", Arial, sans-serif;
+    -webkit-font-smooting:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    color: #e6eef1;
+}
+
+/*Esto creo un degradado animado para la vista del inicio de sesion*/
+body{
+    margin: 0;
+    background: linear-gradient(135deg, #000000, #0a0f17, #001f2d);
+    background-size: 400% 400%;
+    animation: gradientMove 12s ease infinite;
+}
+
+@keyframes gradientMove{
+    0% {background-position: 0% 50%;}
+    50% {background-position: 100% 50%;}
+    100% {background-position: 0% 50%;}
+}
+
+/*Esto es el visual y como se debe colocar el container del login*/
+.login-container {
+    height: 100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 24px;
+}
+
+/*Tarjeta del login visual y efectos especiales para efectos neon*/
+.login-card{
+    width: 380px;
+    padding: 40px;
+    border-radius: 16px;
+    background: var(--card-bg);
+    backdrop-filter: blur(10px) saturate(120%);
+    border: 1px solid rgba(0,255,255,0.06);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.7), 0 0 40px rgba(0, 255, 255, 0.02) inset;
+    text-align: center;
+}
+
+/*Visual para el titulo grande de la pagina y como se debe de ver*/
+.login-title {
+    color: var(--accent);
+    font-size: 28px;
+    margin: 0 0 8px 0;
+    letter-spacing: 0.6px;
+}
+
+/*Visual para los diferentes subtitulos de la pagina*/
+.login-subtitle {
+    color: var(--muted);
+    margin: 0 0 28px 0;
+    font-size: 13px;
+}
+
+/*Visual de los botones con posicion, apareiencia y efectos neon*/
+.login-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    font-weight: 600;
+    font-size: 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    border: none;
+    transition: transform .14s ease, box-shadow .14s ease;
+}
+
+/*Posicion del icono que se le dejo para cada boton especifico*/
+.login-btn .icon{
+    width:22px;
+    height: 22px;
+    object-fit: contain;
+}
+
+.google{
+    background: #fff;
+    color: #222;
+}
+.github{
+    background: #0f1113;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/*Efecto al momento de pasar el mouse*/
+.login-btn:hover{
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0,255,255,0.06);
+}
+
+/*Efecto y apariencia del pie de pagina*/
+.login-footer{
+    margin-top: 6px;
+    color:var(--muted);
+    font-size: 12px;
+};
+
+.login-footer a{
+    color:var(--accent);
+    text-decoration: none;
+}
