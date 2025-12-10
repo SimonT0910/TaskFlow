@@ -5,8 +5,7 @@ import gmailLogo from "../Images/Gmail.svg.webp"; //Se importa la imagen guardad
 //Crea una funcion la cual funcionara siempre que se de click sobre ella.
 function ButtonGoogle(){
     const handleGoogleSignIn = () => {
-        console.log("Iniciar flujo de Google"); 
-        alert("Simulacion: iniciar sesión con Google"); //Muestra ventana emergente.
+        window.location.href = "http://localhost:8000/auth/google";
     };
 
 //Aqui retorna el boton completo con la interaccion del usuario y ademas se le agrega la imagen guardada.

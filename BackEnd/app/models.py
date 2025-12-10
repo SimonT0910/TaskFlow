@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, DateTime, Date, Text, ForeignKey, Boolean
-from sqlalchemy.orm import retionship
+from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
 
@@ -50,10 +50,10 @@ class Task(Base):
     actualizado = Column(DateTime, default=datetime.now)
     
     #Relaciones
-    usuario = realtionship("Usuario", back_populates="tasks")
+    usuario = relationship("Usuario", back_populates="tasks")
     estado = relationship("Estado", back_populates="tasks")
     historial = relationship("Historial", back_populates="tasks")
-    subtareas = realtionship("Calendario", back_populates="subtarea_task")
+    subtareas = relationship("Calendario", back_populates="subtarea_task")
     sugerencias_rel = relationship("SugerenciaIA", back_populates="task_relacionadas")
     
 #Tabla del calendario
