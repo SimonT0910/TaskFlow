@@ -31,7 +31,7 @@ class Estado(Base):
     nombre = Column(String(10), nullable=False)
     
     #Relaciones
-    tasks = relationship("Tasks", back_populates="estado")
+    tasks = relationship("Task", back_populates="estado")
     
 #Tabla de tareas
 
@@ -52,9 +52,9 @@ class Task(Base):
     #Relaciones
     usuario = relationship("Usuario", back_populates="tasks")
     estado = relationship("Estado", back_populates="tasks")
-    historial = relationship("Historial", back_populates="tasks")
+    historial = relationship("Historial", back_populates="task")
     subtareas = relationship("Calendario", back_populates="subtarea_task")
-    sugerencias_rel = relationship("SugerenciaIA", back_populates="task_relacionadas")
+    sugerencias = relationship("SugerenciaIA", back_populates="task")
     
 #Tabla del calendario
 
@@ -90,6 +90,7 @@ class Historial(Base):
     task = relationship("Task", back_populates="historial")
     usuario = relationship("Usuario", back_populates="historial")
 
+
 #Tabla de sugerencias IA
 
 class SugerenciaIA(Base):
@@ -101,11 +102,11 @@ class SugerenciaIA(Base):
     sugerencia = Column(Text)
     creada = Column(DateTime, default=datetime.now)
     apicado = Column(Boolean, default=False)
-    task_relacionado = Column(Integer, ForeignKey("tasks.task_id"), nullable=True)
+    task_id = Column(Integer, ForeignKey("tasks.task_id"), nullable=True)
 
     # Relaciones
     usuario = relationship("Usuario", back_populates="sugerencias")
-    task_relacionada = relationship("Task", back_populates="sugerencias_rel")
+    task = relationship("Task", back_populates="sugerencias")
 
 #Tabla de recomendaciones IA
 

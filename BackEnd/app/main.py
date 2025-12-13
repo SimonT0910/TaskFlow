@@ -1,11 +1,14 @@
 from fastapi import FastAPI
 from app.routers import auth
+from dotenv import load_dotenv
+
+load_dotenv()  
 
 app = FastAPI()
 
-# Registrar el router
 app.include_router(auth.router)
 
 @app.get("/")
 def root():
-    return {"message": "Backend activo"}
+    return {"status": "Backend activo"}
+

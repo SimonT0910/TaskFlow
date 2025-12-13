@@ -1,24 +1,25 @@
-import json
+import os
 import requests
+from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Usuario
-from pathlib import Path
+
+
+load_dotenv()
+
+CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
+
+
+if not CLIENT_ID or not CLIENT_SECRET or not REDIRECT_URI:
+    raise RuntimeError("❌ Variables de entorno de Google NO cargadas")
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
-# Cargar Client_ID y client_secret
-BASE_DIR = Path(__file__).resolve().parent.parent
-with open(BASE_DIR / "google_oauth_client.json", "r") as f:
-    google_config = json.load(f)["web"]
-
-CLIENT_ID = google_config["client_id"]
-CLIENT_SECRET = google_config["client_secret"]
-REDIRECT_URI = google_config["redirect_uris"][0]
-
-# Ruta para iniciar sesión con Google
 @router.get("/google")
 def login_google():
     google_auth_url = (
@@ -30,11 +31,12 @@ def login_google():
         "&access_type=offline"
         "&prompt=consent"
     )
+
     return RedirectResponse(google_auth_url)
 
-# Callback de Google
 @router.get("/google/callback")
 def google_callback(code: str, db: Session = Depends(get_db)):
+
     token_url = "https://oauth2.googleapis.com/token"
 
     data = {
@@ -45,27 +47,34 @@ def google_callback(code: str, db: Session = Depends(get_db)):
         "grant_type": "authorization_code",
     }
 
+
     token_response = requests.post(token_url, data=data)
     token_json = token_response.json()
 
     if "access_token" not in token_json:
-        raise HTTPException(status_code=400, detail=f"Google error: {token_json}")
-
+        raise HTTPException(
+            status_code=400,
+            detail=f"Google error: {token_json}"
+        )
 
     access_token = token_json["access_token"]
 
-    # Obtener datos del usuario
-    userinfo = requests.get(
+    userinfo_response = requests.get(
         "https://www.googleapis.com/oauth2/v3/userinfo",
         headers={"Authorization": f"Bearer {access_token}"}
-    ).json()
+    )
+
+    userinfo = userinfo_response.json()
 
     email = userinfo.get("email")
     nombre = userinfo.get("given_name")
     apellido = userinfo.get("family_name")
 
     if not email:
-        raise HTTPException(status_code=400, detail="Google no proporcionó email")
+        raise HTTPException(
+            status_code=400,
+            detail="Google no proporcionó email"
+        )
 
     usuario = db.query(Usuario).filter(Usuario.email == email).first()
 
@@ -79,6 +88,8 @@ def google_callback(code: str, db: Session = Depends(get_db)):
         db.add(usuario)
         db.commit()
         db.refresh(usuario)
+
+    print("✅ LOGIN GOOGLE COMPLETADO")
 
     return {
         "message": "Inicio de sesión exitoso con Google",
