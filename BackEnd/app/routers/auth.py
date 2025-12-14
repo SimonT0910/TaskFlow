@@ -10,16 +10,26 @@ from app.models import Usuario
 
 load_dotenv()
 
+#Variables de entorno Google
 CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
 
+#Variables de entorno Github
+GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
+GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
+GITHUB_REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI")
+
 
 if not CLIENT_ID or not CLIENT_SECRET or not REDIRECT_URI:
-    raise RuntimeError("❌ Variables de entorno de Google NO cargadas")
+    raise RuntimeError("Variables de entorno de Google NO cargadas")
+
+if not GITHUB_CLIENT_ID or not GITHUB_CLIENT_SECRET or not GITHUB_REDIRECT_URI:
+    raise RuntimeError("Variables de entorno de GitHub NO cargadas")
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
+#Redireccion de cuenta de Google
 @router.get("/google")
 def login_google():
     google_auth_url = (
@@ -34,6 +44,19 @@ def login_google():
 
     return RedirectResponse(google_auth_url)
 
+#Redireccion de cuenta de GitHub
+@router.get("/github")
+def login_github():
+    github_auth_url = (
+        "https://github.com/login/oauth/authorize"
+        f"?client_id={GITHUB_CLIENT_ID}"
+        f"&redirect_uri={GITHUB_REDIRECT_URI}"
+        "&scope=user:email"
+    )
+    
+    return RedirectResponse(github_auth_url)
+
+#Llamado cuenta de Google
 @router.get("/google/callback")
 def google_callback(code: str, db: Session = Depends(get_db)):
 
@@ -89,10 +112,66 @@ def google_callback(code: str, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(usuario)
 
-    print("✅ LOGIN GOOGLE COMPLETADO")
+    print("LOGIN GOOGLE COMPLETADO")
 
     return {
         "message": "Inicio de sesión exitoso con Google",
+        "usuario_id": usuario.usuario_id,
+        "email": usuario.email,
+        "nombre": usuario.nombre,
+    }
+    
+#Llamado cuenta de GitHub
+@router.get("/github/callback")
+def github_callback(code: str, db: Session = Depends(get_db)):
+    token_response = requests.post(
+        "https://github.com/login/oauth/access_token",
+        headers={"Accept": "application/json"},
+        data={
+            "client_id": GITHUB_CLIENT_ID,
+            "client_secret": GITHUB_CLIENT_SECRET,
+            "code": code,
+            "redirect_uri": GITHUB_REDIRECT_URI,
+        },
+    ).json()
+    
+    access_token = token_response.get("access_token")
+    
+    if not access_token:
+        raise HTTPException(status_code=400, detail="GitHub no devolvió token")
+    
+    user_response = requests.get(
+        "https://api.github.com/user",
+        headers={"Authorization": f"Bearer {access_token}"}
+    ).json()
+    
+    emails_response = requests.get(
+        "https://api.github.com/user/emails",
+        headers={"Authorization": f"Bearer {access_token}"}
+    ).json()
+    
+    email = next((e["email"] for e in emails_response if e["primary"]), None)
+    
+    if not email:
+        raise HTTPException(status_code=400, detail="GitHub no devolvió email")
+    
+    usuario = db.query(Usuario).filter(Usuario.email == email).first()
+    
+    if not usuario:
+        usuario = Usuario(
+            nombre=user_response.get("login"),
+            apellido="GitHub",
+            email=email,
+            contrasena="github_oauth"
+        )
+        db.add(usuario)
+        db.commit()
+        db.refresh(usuario)
+        
+    print("LOGIN GITHUB COMPLETADO")
+    
+    return {
+        "message": "Inicio de sesión exitoso con GitHub",
         "usuario_id": usuario.usuario_id,
         "email": usuario.email,
         "nombre": usuario.nombre,
