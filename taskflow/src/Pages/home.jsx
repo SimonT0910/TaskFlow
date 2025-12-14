@@ -1,56 +1,71 @@
-//Pagina principal para probar el inicio de sesion (sera cambiada con el tiempo)
+//Landing page
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-export default function Home(){
+export default function home() {
     const navigate = useNavigate();
 
-    const handleBack = () => {
-        navigate("/Login"); 
+    const handleLogin = () => {
+        navigate("/Login");
     };
 
-    return(
-        <div style={{
-            minHeight: "100vh",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "linear-gradient(135deg, #00121a, #000000)",
-            color: "#e6f7fb",
-            fontFamily: "Poppins, Arial, sans-serif",
-            padding: 24
-        }}>
-            <div style={{
-                textAlign: "center",
-                borderRadius: 16,
-                padding: "48px 36px",
-                boxShadow: "0 10px 30px rgba(0,0,0,0.6)",
-                background: "rgba(10,10,12,0.6)",
-                width: "min(900px, 90%)"
-            }}>
-                <h1 style={{fontSize: 56, margin: 0, color: "#00f0ff", letterSpacing: ".6px"}}>TaskFlow</h1>
-                <p style={{color: "#9aa0a6", marginTop: 8, fontSize: 16}}>
-                    Bienvenido 
+    return (
+        <div className="home">
+            <section className="home-hero">
+                <h1>TaskFlow</h1>
+                <p>
+                    Organiza tus tareas, optimiza tu tiempo y deja que la IA
+                    te ayude a ser más productivo.
                 </p>
-                <button
-                onClick={handleBack}
-                style={{
-                    marginTop: 30,
-                    padding: "12px 24px",
-                    borderRadius: 10,
-                    border: "none",
-                    fontSize: 16,
-                    cursor: "pointer",
-                    backgroundColor: "#00f0ff",
-                    color: "black",
-                    transition: "0.2s ease",
-                    fontWeight: "bold",
-                }}
-                onMouseOver={(e) => (e.target.style.opacity = 0.8)}
-                onMouseOut={(e) => (e.target.style.opacity = 1)}
-                >
+
+                <button onClick={handleLogin}>
+                    Iniciar sesión
                 </button>
-            </div>
+            </section>
+
+            <section className="home-benefits">
+                <div className="benefit">
+                    <h3>Organización inteligente</h3>
+                    <p>
+                        Administra tareas, prioridadesy fechas sin perder el control.
+                    </p>
+                </div>
+
+                <div className="benefit">
+                    <h3>IA que te ayuda</h3>
+                    <p>
+                        Recibe sugerencias y recomendaciones automáticas para mejorar tu flujo de trabajo.
+                    </p>
+                </div>
+
+                <div className="benefit">
+                    <h3>Calendario integrado</h3>
+                    <p>
+                        Visualiza tus tareas y eventos en un solo lugar.
+                    </p>
+                </div>
+            </section>
+
+            <section className="home-preview">
+                <h2>¿Por qué usar TaskFlow?</h2>
+                <p>
+                    TaskFlow combina gestión de tareas, calendario e inteligencia artificial
+                    para ayudarte a cumplir tus objetivos diarios sin estrés.
+                </p>
+
+                <div className="preview-images">
+                    <div className="image-placeholder">Imagen 1</div>
+                    <div className="image-placeholder">Imagen 2</div>
+                    <div className="image-placeholder">Imagen 3</div>
+                </div>
+            </section>
+
+            <section className="home-cta">
+                <h2>Empieza a mejorar tu productividad hoy</h2>
+                <button onClick={handleLogin}>
+                    Comenzar ahora
+                </button>
+            </section>
         </div>
     );
 }
