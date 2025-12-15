@@ -2,7 +2,7 @@
 import React from "react"; //Trae la biblioteca principal de React necesaria para trabajar.
 import "../styles/login.css"; //Importa lo que este en la carpeta Styles.
 import ButtonGoogle from "../Components/ButtonGoogle.jsx"; //Importa lod dos botones y sus respectivos componentes.
-import ButtonGithub from "../Components/ButtonGithub";
+import ButtonGithub from "../Components/ButtonGithub.jsx";
 
 /*Lo que se ve en pantalla con cada una de las propiedades que va a tener la pagina
 estas son diferentes variables que se van a ver en la parte dellogin principal*/
