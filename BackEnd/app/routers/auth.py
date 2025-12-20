@@ -114,12 +114,9 @@ def google_callback(code: str, db: Session = Depends(get_db)):
 
     print("LOGIN GOOGLE COMPLETADO")
 
-    return {
-        "message": "Inicio de sesión exitoso con Google",
-        "usuario_id": usuario.usuario_id,
-        "email": usuario.email,
-        "nombre": usuario.nombre,
-    }
+    return RedirectResponse(
+    url="http://localhost:3000/app"
+)
     
 #Llamado cuenta de GitHub
 @router.get("/github/callback")
@@ -170,9 +167,6 @@ def github_callback(code: str, db: Session = Depends(get_db)):
         
     print("LOGIN GITHUB COMPLETADO")
     
-    return {
-        "message": "Inicio de sesión exitoso con GitHub",
-        "usuario_id": usuario.usuario_id,
-        "email": usuario.email,
-        "nombre": usuario.nombre,
-    }
+    return RedirectResponse(
+    url="http://localhost:3000/app"
+)
