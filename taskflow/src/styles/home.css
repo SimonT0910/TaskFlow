@@ -1,73 +1,79 @@
+/*Variables igual al login*/
+:root {
+    --bg-1: #0d0d0d;
+    --card-bg: rgba(20, 20, 20, 0.72);
+    --accent: #00f0ff;
+    --muted: #9aa0a6;
+}
+
 /*Contenedor principal*/
 .home {
     min-height: 100vh;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 24px;
+    flex-direction: column;
+    gap: 120px;
+    padding: 80px 24px;
 }
 
-/*Tarjeta Hero*/
+/*Hero*/
 .home-hero {
-    max-width: 1000px;
-    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
     text-align: center;
 
-    background: rgba(20, 20, 20, 0.65);
+    background: var(--card-bg);
     backdrop-filter: blur(12px) saturate(120%);
-    border-radius: 20px;
+    border-radius: 24px;
 
-    padding: 60px 48px;
+    padding: 80px 60px;
     border: 1px solid rgba(0, 255, 255, 0.08);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7),
     0 0 50px rgba(0, 255, 255, 0.03);
 }
 
-/*Titulo*/
+/*Titulo principal*/
 .home-hero h1 {
     color: var(--accent);
     font-size: 56px;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
     letter-spacing: 1px;
 }
 
-/*Texto principal*/
+/*Texto*/
 .home-hero p {
     color: var(--muted);
     font-size: 18px;
-    max-width: 600px;
-    height: auto;
-    display: block;
-    margin: 30px auto;
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6),
-    0 0 40px rgba(0, 255, 255, 0.05);
+    max-width: 700px;
+    margin: 0 auto 40px;
+    line-height: 1.6;
 }
 
 /*Imagen principal*/
 .home-hero img {
     width: 100%;
-    max-width: 720px;
+    max-width: 700px;
+    margin: 40px auto;
     display: block;
-    margin: 30px auto 40px auto;
 
-    border-radius: 16px;
+    border-radius: 18px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6),
-    0 0 40px rgba(0, 255, 255, 0.05);
+    0 0 40px rgba(0, 255, 255, 0.05);   
 }
 
-/*Boton principal*/
+/*Boton*/
 .home-hero button {
     margin-top: 20px;
-    padding: 16px 36px;
+    padding: 16px 42px;
     font-size: 18px;
     font-weight: 700;
     border-radius: 14px;
     border: none;
     cursor: pointer;
+
     background: var(--accent);
     color: #000;
-    transition: transform 0.15s ease, box-sadow 0.15s;
+
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .home-hero button:hover {
@@ -75,17 +81,116 @@
     box-shadow: 0 12px 40px rgba(0, 255, 255, 0.25);
 }
 
-/* Responsive*/
-@media (max-width: 768px){
-    .home-hero {
-        padding: 40px 24px;
+/*Beneficios*/
+.home-benefits {
+    max-width: 1100px;
+    margin: 0 auto;
+
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+}
+
+/*Tarjeta beneficio*/
+.benefit {
+    background: var(--card-bg);
+    padding: 36px 28px;
+    border-radius: 20px;
+    text-align: center;
+
+    border: 1px solid rgba(0, 255, 255, 0.06);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+}
+
+.benefit h3 {
+    color: var(--accent);
+    margin-bottom: 12px;
+    font-size: 20px;
+}
+
+.benefit p {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+/*Imagen beneficio*/
+.benefit img {
+    width: 100%;
+    max-width: 220px;
+    margin: 0 auto;
+    display: block;
+}
+
+/*Preview*/
+.home-preview {
+    max-width: 1000px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.home-preview h2 {
+    color: var(--accent);
+    font-size: 36px;
+    margin-bottom: 20px;
+}
+
+.home-preview p {
+    color: var(--muted);
+    max-width: 700px;
+    margin: 0 auto 40px;
+    font-size: 16px;
+}
+
+.home-preview img {
+    width: 100%;
+    max-width: 800px;
+    border-radius: 18px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+}
+
+/*Call to action*/
+.home-cta {
+    text-align: center;
+    padding-bottom: 40px;
+}
+
+.home-cta h2 {
+    color: #ffffff;
+    font-size: 32px;
+    margin-bottom: 24px;
+}
+
+.home-cta button {
+    padding: 16px 44px;
+    font-size: 18px;
+    font-weight: 700;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+
+    background: var(--accent);
+    color: #000;
+
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.home-cta button:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 255, 255, 0.25);
+}
+
+/*Responsive*/
+@media (max-width: 900px) {
+    .home-benefits {
+        grid-template-columns: 1fr;
     }
 
     .home-hero h1 {
         font-size: 42px;
     }
 
-    .home-hero p {
-        font-size: 16px;
+    .home-preview h2 {
+        font-size: 28px;
     }
 }
