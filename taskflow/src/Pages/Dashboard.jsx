@@ -5,6 +5,7 @@ import Header from "../Components/Header";
 export default function Dashboard(){
     //Control del mes y año en el calendario
     const [currentDate, setCurrentDate] = useState(new Date());
+    const [activePanel, setActivePanel] = useState(null);
     
     //Nombres de los meses
     const months = [
@@ -22,17 +23,32 @@ export default function Dashboard(){
 
     return (
         <div className="dashboard-layout">
-            <Header />
+            <Header setActivePanel={setActivePanel}/>
 
             <div className="dashboard-main">
                 <div className="content-grid">
 
-                    {/* Panel izquierdo */}
                     <section className="left-panel">
-                        {/* contenido futuro */}
+                        {activePanel === "actividades" && (
+                            <div className="activities-panel slide-in">
+                                <div className="activities-header">
+                                    <h2>📊 Actividades</h2>
+                                </div>
+
+                                <div className="activities-content empty">
+                                    <p>No tienes tareas pendientes</p>
+                                    <span>Estás libre</span>
+                                </div>
+
+                                <div className="activities-footer">
+                                    <button className="manage-tasks-btn">
+                                        Adminitrar tareas
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </section>
 
-                    {/* Panel derecho */}
                     <section className="right-panel">
 
                         <div className="calendar-container">

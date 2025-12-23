@@ -1,14 +1,15 @@
 import React from "react";
 import avatar from "../Images/avatar.png";
 
-export default function Header() {
+export default function Header({setActivePanel}) {
     return (
         <header className="dashboard-header">
             <div className="header-left">
                 <span className="logo">TaskFlow</span>
 
                 <nav className="header-menu">
-                    <button className="header-item">
+                    <button className="header-item"
+                    onClick={() => setActivePanel("actividades")}>
                         📊 <span>Actividades</span>
                     </button>
 
@@ -31,6 +32,6 @@ export default function Header() {
                     <img src={avatar} alt="Perfil" />
                 </div>
             </div>
-        </header>
+        </header >
     );
 }
