@@ -6,6 +6,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Usuario
+from app.auth.jwt import create_access_token
 
 
 load_dotenv()
@@ -112,10 +113,10 @@ def google_callback(code: str, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(usuario)
 
-    print("LOGIN GOOGLE COMPLETADO")
+    access_token = create_access_token(usuario.usuario_id)
 
     return RedirectResponse(
-    url="http://localhost:3000/app"
+    url="http://localhost:3000/app?token={access_token}"
 )
     
 #Llamado cuenta de GitHub
@@ -165,8 +166,8 @@ def github_callback(code: str, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(usuario)
         
-    print("LOGIN GITHUB COMPLETADO")
+    access_token = create_access_token(usuario.usuario_id)
     
     return RedirectResponse(
-    url="http://localhost:3000/app"
+    url="http://localhost:3000/app?token={access_token}"
 )
