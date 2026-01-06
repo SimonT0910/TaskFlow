@@ -76,3 +76,5 @@ output_text varchar(max),
 creado datetime default getdate(),
 foreign key (usuario_id) references usuarios(usuario_id)
 );
+
+select * from usuarios

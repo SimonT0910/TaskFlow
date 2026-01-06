@@ -20,7 +20,7 @@ def get_current_user(
             detail="Token inválido"
         )
 
-    user_id = payload.get("sub")
+    user_id = int(payload.get("sub"))
 
     usuario = db.query(Usuario).filter(
         Usuario.usuario_id == user_id

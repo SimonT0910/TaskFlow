@@ -14,6 +14,15 @@ router = APIRouter(
     tags=["Tasks"]
 )
 
+@router.get("/", response_model=list[TaskResponse])
+def get_tasks(
+    db: Session = Depends(get_db),
+    usuario = Depends(get_current_user)
+):
+    return db.query(Task).filter(
+        Task.usuario_id == usuario.usuario_id
+    ).all()
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create_task(
     task: TaskCreate,
@@ -121,3 +130,24 @@ def get_task_detail(
         creado=tarea.creado,
         actualizado=tarea.actualizado
     )
+    
+#Eliminar la tarea
+@router.delete("/{task_id}", status_code=204)
+def delete_task(
+    task_id: int,
+    db: Session = Depends(get_db),
+    usuario = Depends(get_current_user)
+):
+    task = db.query(Task).filter(
+        Task.task_id == task_id,
+        Task.usuario_id == usuario.usuario_id
+    ).first()
+    
+    if not task:
+        raise HTTPException(
+            status_code=404,
+            detail="Tarea no encontrada"
+        )
+    
+    db.delete(task)
+    db.commit()

@@ -9,7 +9,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 #Crear Token
 def create_access_token(user_id: int):
     payload = {
-        "sub": user_id,
+        "sub": str(user_id),
         "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     }
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)

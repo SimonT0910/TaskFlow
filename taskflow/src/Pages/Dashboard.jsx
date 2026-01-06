@@ -3,9 +3,30 @@ import "../styles/dashboard.css";
 import Header from "../Components/Header";
 
 export default function Dashboard(){
+    //Token
+    const token = localStorage.getItem("token");
+    //Lista de tareas
+    const [tasks, setTasks] = useState([]);
+    //Tarea seleccionada
+    const [selectedTask, setSelectedTask] = useState(null);
+    
     //Control del mes y año en el calendario
     const [currentDate, setCurrentDate] = useState(new Date());
     const [activePanel, setActivePanel] = useState(null);
+
+    //Traer las actividades para que se vean en el frontend
+    useEffect(() => {
+        if (!token) return;
+
+        fetch("http://localhost:8000/tasks/", {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        })
+        .then(res => res.json())
+        .then(data => setTasks(data))
+        .catch(err => console.error(err));
+    }, [token]);
 
     //Conexion con el boton de nueva tarea
     const [showTaskModal, setShowTaskModal] = useState(false);
@@ -14,7 +35,7 @@ export default function Dashboard(){
     const [taskData, setTaskData] = useState({
         titulo: "",
         descripcion: "",
-        prioridad: "Media",
+        prioridad: "2",
         fecha_estimada: "",
         tiempo: ""
     });
@@ -41,10 +62,17 @@ export default function Dashboard(){
         setCurrentDate(newDate);
     };
 
-    //Función para guardar las tareas
+    //Se utiliza para que el boton de guardado envie el token
     const handleSaveTask = async () => {
         try {
             const token = localStorage.getItem("token");
+
+            if (!token) {
+                alert("No estás autenticado");
+                return;
+            }
+
+            console.log("token enviado: ", token);
 
             const response = await fetch("http://localhost:8000/tasks/", {
                 method: "POST",
@@ -82,6 +110,19 @@ export default function Dashboard(){
         }
     };
 
+    //Función para eliminar tareas
+    const eliminarTarea = async (taskId) => {
+        await fetch (`http://localhost:8000/tasks/${taskId}`, {
+            method: "DELETE",
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        setTasks(tasks.filter(t => t.task_id !== taskId));
+        setSelectedTask(null);
+    }
+
     //Guarda el Token desde el frontend
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -107,9 +148,23 @@ export default function Dashboard(){
                                     <h2>📊 Actividades</h2>
                                 </div>
 
-                                <div className="activities-content empty">
-                                    <p>No tienes tareas pendientes</p>
-                                    <span>Estás libre</span>
+                                <div className="activities-content">
+                                    {tasks.length === 0 ? (
+                                        <>
+                                            <p>No tienes tareas pendientes</p>
+                                            <span>Estás libre</span>
+                                        </>
+                                    ) : (
+                                        tasks.map(task => (
+                                            <div
+                                                key={task.task_id}
+                                                className="actividad-card"
+                                                onClick={() => setSelectedTask(task)}
+                                            >
+                                                {task.titulo}
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
 
                                 <div className="activities-footer">
@@ -215,6 +270,28 @@ export default function Dashboard(){
                             Guardar
                         </button>
                     </div>
+                </div>
+            </div>
+        )}
+
+        {selectedTask && (
+            <div className="modal-overlay">
+                <div className="modal">
+                    <h3>{selectedTask.titulo}</h3>
+                    <p>{selectedTask.descripcion}</p>
+
+                    <button disabled>Ayuda con IA</button>
+
+                    <button
+                        onClick={() => eliminarTarea(selectedTask.task_id)}
+                        className="danger"
+                    >
+                        Eliminar
+                    </button>
+
+                    <button onClick={() => setSelectedTask(null)}>
+                        Cerrar
+                    </button>
                 </div>
             </div>
         )}

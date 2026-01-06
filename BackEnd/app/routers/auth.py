@@ -116,7 +116,7 @@ def google_callback(code: str, db: Session = Depends(get_db)):
     access_token = create_access_token(usuario.usuario_id)
 
     return RedirectResponse(
-    url="http://localhost:3000/app?token={access_token}"
+    url=f"http://localhost:3000/app?token={access_token}"
 )
     
 #Llamado cuenta de GitHub
@@ -169,5 +169,5 @@ def github_callback(code: str, db: Session = Depends(get_db)):
     access_token = create_access_token(usuario.usuario_id)
     
     return RedirectResponse(
-    url="http://localhost:3000/app?token={access_token}"
+    url=f"http://localhost:3000/app?token={access_token}"
 )
