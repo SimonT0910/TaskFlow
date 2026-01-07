@@ -63,9 +63,9 @@ tipo varchar(50),
 sugerencia varchar(max),
 creada datetime default getdate(),
 apicado bit default 0,
-task_relacionado int null,
+task_id int null,
 foreign key (usuario_id) references usuarios(usuario_id),
-foreign key (task_relacionado) references tasks(task_id)
+foreign key (task_id) references tasks(task_id)
 );
 
 create table recomendacionesIA(
@@ -76,5 +76,3 @@ output_text varchar(max),
 creado datetime default getdate(),
 foreign key (usuario_id) references usuarios(usuario_id)
 );
-
-select * from usuarios

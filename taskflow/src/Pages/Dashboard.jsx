@@ -134,6 +134,26 @@ export default function Dashboard(){
         }
     }, []);
 
+    //Cambio de numero a texto para la prioridad
+    const texto = (prioridad) => {
+        switch (prioridad) {
+            case 1:
+                return "Alta";
+            case 2:
+                return "Media";
+            case 3:
+                return "Baja";
+            default:
+                return "No definida";
+        }
+    };
+
+    //Cambio de fecha
+    const fechaCambio = (fecha) => {
+        if (!fecha) return "-";
+        return fecha.split("T")[0]
+    };
+
     return (
         <div className="dashboard-layout">
             <Header setActivePanel={setActivePanel}/>
@@ -154,14 +174,21 @@ export default function Dashboard(){
                                             <p>No tienes tareas pendientes</p>
                                             <span>Estás libre</span>
                                         </>
-                                    ) : (
+                                    ): (
                                         tasks.map(task => (
                                             <div
                                                 key={task.task_id}
-                                                className="actividad-card"
+                                                className="activities-card"
                                                 onClick={() => setSelectedTask(task)}
                                             >
-                                                {task.titulo}
+                                                <span>{task.titulo}</span>
+
+                                                <div className="semaforo">
+                                                    <div className={`luz verde ${task.prioridad === 3 ? "activa" : ""}`} />
+                                                    <div className={`luz amarilla ${task.prioridad === 2 ? "activa" : ""}`} />
+                                                    <div className={`luz roja ${task.prioridad === 1 ? "activa" : ""}`} />
+
+                                                </div>
                                             </div>
                                         ))
                                     )}
@@ -275,23 +302,31 @@ export default function Dashboard(){
         )}
 
         {selectedTask && (
-            <div className="modal-overlay">
-                <div className="modal">
+            <div className="task-modal-overlay">
+                <div className="task-modal">
+                    <button className="close-btn" onClick={() => setSelectedTask(null)}>✕</button>
+
                     <h3>{selectedTask.titulo}</h3>
-                    <p>{selectedTask.descripcion}</p>
 
-                    <button disabled>Ayuda con IA</button>
+                    <div className="task-info">
+                        <p><b>Descripción:</b> {selectedTask.descripcion}</p>
+                        <p><b>Estado:</b> {selectedTask.estado?.nombre}</p>
+                        <p><b>Prioridad:</b> {texto(selectedTask.prioridad)}</p>
+                        <p><b>Fecha estimada:</b> {selectedTask.fecha_estimada}</p>
+                        <p><b>Tiempo:</b> {selectedTask.tiempo}</p>
+                        <p><b>Creado:</b> {fechaCambio(selectedTask.creado)}</p>
+                        <p><b>Actualizado:</b> {fechaCambio(selectedTask.actualizado)}</p>
+                    </div>
 
-                    <button
-                        onClick={() => eliminarTarea(selectedTask.task_id)}
-                        className="danger"
-                    >
-                        Eliminar
-                    </button>
-
-                    <button onClick={() => setSelectedTask(null)}>
-                        Cerrar
-                    </button>
+                    <div className="task-actions">
+                        <button className="btn-ai" disabled>Ayuda con IA</button>
+                        <button
+                            className="btn-delete"
+                            onClick={() => eliminarTarea(selectedTask.task_id)}
+                        >
+                            Eliminar
+                        </button>
+                    </div>
                 </div>
             </div>
         )}

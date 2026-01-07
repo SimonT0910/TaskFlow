@@ -14,7 +14,7 @@ class TaskResponse(BaseModel):
     task_id: int
     titulo: str
     descripcion: str
-    estado_id: int
+    estado: EstadoOut
     prioridad: Optional[int]
     fecha_estimada: Optional[date]
     tiempo: Optional[int]
@@ -22,3 +22,10 @@ class TaskResponse(BaseModel):
     
     class Config:
         orm_mode = True
+        
+class EstadoOut(BaseModel):
+    estado_id: int
+    nombre: str
+    
+    class Config:
+        from_attributes = True

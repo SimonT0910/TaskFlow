@@ -218,10 +218,9 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    color: var(--muted);
+    gap: 14px;
+    overflow-y: auto;
+    padding-right: 4px;
 }
 
 .activities-content p{
@@ -254,6 +253,125 @@
 .manage-tasks-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 30px rgba(0, 255, 255, 0.3);
+}
+
+/* Actividades - tarjetas */
+.activities-card {
+    background: rgba(20, 20, 30, 0.85);
+    border: 1px solid var(--border-soft);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    color: #e6eef1;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    user-select: none;
+}
+
+.activities-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 255, 255, 0.15);
+}
+
+/* Semaforo de prioridades */
+.semaforo {
+    display: flex;
+    gap: 6px;
+}
+
+.luz {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    opacity: 0.25;
+}
+
+.luz.verde { background: #22c55e; }
+.luz.amarilla { background: #facc15; }
+.luz.roja { background: #ef4444; }
+
+.luz.activa {
+    opacity: 1;
+    box-shadow: 0 0 8px currentColor;
+}
+
+/* Modal de la información de las actividades */
+.task-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.task-modal {
+    background: #0f172a;
+    border-radius: 18px;
+    padding: 24px;
+    width: 520px;
+    max-width: 90%;
+    color: #e6eef1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* X de cerrar modal */
+.close-btn {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    background: transparent;
+    border: none;
+    color: var(--accent);
+    font-size: 20px;
+    cursor: pointer;
+}
+
+/* Información del modal */
+.task-modal h3 {
+    color: var(--accent);
+    font-size: 22px;
+}
+
+.task-info {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--muted);
+}
+
+.task-actions {
+    margin-top: auto;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.btn-ai {
+    background: #1e293b;
+    border: 1px solid var(--border-soft);
+    color: var(--muted);
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    cursor: not-allowed;
+}
+
+.btn-delete {
+    background: #ef4444;
+    border: none;
+    color: #000;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
 }
 
 /* Cambie el tamaño dependiendo de la pantalla */
