@@ -374,30 +374,35 @@
     cursor: pointer;
 }
 
-/* Cambie el tamaño dependiendo de la pantalla */
-@media (max-width: 1000px) {
-    .content-grid {
-        grid-template-columns: 1fr;
-    }
+/* Animación de entrada para nuevas actividades */
+.enter-left {
+    animation: enterFromLeft 0.4s ease-out;
+}
 
-    .right-panel {
-        padding: 24px;
+@keyframes enterFromLeft {
+    from {
+        transform: translateX(-40px);
+        opacity: 0;
     }
-
-    .calendar-container{
-        padding: 24px;
+    to {
+        transform: translateX(0);
+        opacity: 1;
     }
+}
 
-    .calendar-title{
-        padding: 20px;
+/* Animación de salida */
+.exit-right {
+    animation: exitToRight 0.4s ease-in forwards;
+}
+
+@keyframes exitToRight{
+    from {
+        transform: translateX(0);
+        opacity: 1;
     }
-
-    .sidebar {
-        width: 70px;
-    }
-
-    .sidebar-item .label {
-        display: none;
+    to {
+        transform: translateX(40px);
+        opacity: 0;
     }
 }
 
@@ -462,4 +467,31 @@
 
 .slide-in {
     animation: slideInFromRight 0.35s ease-out;
+}
+
+/* Cambia el tamaño dependiendo de la pantalla */
+@media (max-width: 1000px) {
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .right-panel {
+        padding: 24px;
+    }
+
+    .calendar-container{
+        padding: 24px;
+    }
+
+    .calendar-title{
+        padding: 20px;
+    }
+
+    .sidebar {
+        width: 70px;
+    }
+
+    .sidebar-item .label {
+        display: none;
+    }
 }

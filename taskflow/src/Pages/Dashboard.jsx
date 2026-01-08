@@ -9,6 +9,10 @@ export default function Dashboard(){
     const [tasks, setTasks] = useState([]);
     //Tarea seleccionada
     const [selectedTask, setSelectedTask] = useState(null);
+
+    // Para animaciones de entrada y salida de actividades
+    const [taskEnteringId, setTaskEnteringId] = useState(null); //identifica la tarea que acaba de entrar
+    const [taskLeavingId, setTaskLeavingId] = useState(null); //Identifica la tarea que se va a eliminar
     
     //Control del mes y año en el calendario
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -93,6 +97,14 @@ export default function Dashboard(){
                 throw new Error("Error al crear la tarea");
             }
 
+            const nuevaTarea = await response.json();
+
+            //Agrega la tarea al estado
+            setTasks(prev => [...prev, nuevaTarea]);
+
+            //Marca esta tarea como entrante
+            setTaskEnteringId(nuevaTarea.task_id);
+
             //Limpiar el formulario
             setTaskData({
                 titulo: "",
@@ -112,16 +124,23 @@ export default function Dashboard(){
 
     //Función para eliminar tareas
     const eliminarTarea = async (taskId) => {
-        await fetch (`http://localhost:8000/tasks/${taskId}`, {
-            method: "DELETE",
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
+        //Marca la tarea como saliendo
+        setTaskLeavingId(taskId);
 
-        setTasks(tasks.filter(t => t.task_id !== taskId));
-        setSelectedTask(null);
-    }
+        setTimeout(async () => {
+            await fetch(`http://localhost:8000/tasks/${taskId}`, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            //Quita el estado
+            setTasks(prev => prev.filter(t => t.task_id !== taskId));
+            setSelectedTask(null);
+            setTaskLeavingId(null);
+        }, 400);
+    };
 
     //Guarda el Token desde el frontend
     useEffect(() => {
@@ -178,7 +197,10 @@ export default function Dashboard(){
                                         tasks.map(task => (
                                             <div
                                                 key={task.task_id}
-                                                className="activities-card"
+                                                className={`activities-card
+                                                    ${taskEnteringId === task.task_id ? "enter-left" : ""}
+                                                    ${taskLeavingId === task.task_id ? "exit-right" : ""}
+                                                `}
                                                 onClick={() => setSelectedTask(task)}
                                             >
                                                 <span>{task.titulo}</span>
@@ -331,5 +353,5 @@ export default function Dashboard(){
             </div>
         )}
         </div>
-    );
-}   
+    ); 
+};

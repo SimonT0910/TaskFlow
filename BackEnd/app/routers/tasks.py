@@ -14,15 +14,6 @@ router = APIRouter(
     tags=["Tasks"]
 )
 
-@router.get("/", response_model=list[TaskResponse])
-def get_tasks(
-    db: Session = Depends(get_db),
-    usuario = Depends(get_current_user)
-):
-    return db.query(Task).filter(
-        Task.usuario_id == usuario.usuario_id
-    ).all()
-
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create_task(
     task: TaskCreate,
@@ -54,8 +45,8 @@ def create_task(
         fecha_estimada = task.fecha_estimada,
         tiempo = task.tiempo,
         estado_id = estado_pendiente.estado_id,
-        creado = datetime.utcnow(),
-        actualizado = datetime.utcnow()
+        creado = datetime.now(),
+        actualizado = datetime.now()
     )
     
     #3. Guardar en la base de datos
@@ -63,11 +54,19 @@ def create_task(
     db.commit()
     db.refresh(nueva_tarea)
     
-    return {
-        "message": "Tarea creada correctamente",
-        "task_id": nueva_tarea.task_id,
-        "estado": "Pendiente"
-    }
+    return TaskResponse(
+        task_id = nueva_tarea.task_id,
+        titulo = nueva_tarea.titulo,
+        descripcion = nueva_tarea.descripcion,
+        estado = {
+            "nombre": nueva_tarea.estado.nombre
+        },
+        prioridad = nueva_tarea.prioridad,
+        fecha_estimada = nueva_tarea.fecha_estimada,
+        tiempo = nueva_tarea.tiempo,
+        creado = nueva_tarea.creado,
+        actualizado = nueva_tarea.actualizado
+    )
 
 #Separa cada tarea por usuario 
 @router.get("/", response_model=List[TaskResponse])
