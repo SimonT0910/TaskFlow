@@ -10,6 +10,13 @@ class TaskCreate(BaseModel):
     fecha_estimada: Optional[date] = None
     tiempo: Optional[int] = None
     
+#Actualiza solo los campos aqui indicados
+class TaskUpdate(BaseModel):
+    titulo: Optional[str] = None
+    descripcion: Optional[str] = None
+    fecha_estimada: Optional[date] = None
+    tiempo: Optional[int] = None
+    
 class TaskResponse(BaseModel):
     task_id: int
     titulo: str

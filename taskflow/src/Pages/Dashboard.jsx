@@ -13,10 +13,23 @@ export default function Dashboard(){
     // Para animaciones de entrada y salida de actividades
     const [taskEnteringId, setTaskEnteringId] = useState(null); //identifica la tarea que acaba de entrar
     const [taskLeavingId, setTaskLeavingId] = useState(null); //Identifica la tarea que se va a eliminar
+
+    //Timeout para el doble click de actualizacion
+    const clickTimeout = React.useRef(null);
     
     //Control del mes y año en el calendario
     const [currentDate, setCurrentDate] = useState(new Date());
     const [activePanel, setActivePanel] = useState(null);
+
+    //Componentes para la actualizacion de las tareas
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [taskToEdit, setTaskToEdit] = useState(null);
+    const [editTaskData, setEditTaskData] = useState({
+        titulo: "",
+        descripcion: "",
+        fecha_estimada: "",
+        tiempo: ""
+    });
 
     //Traer las actividades para que se vean en el frontend
     useEffect(() => {
@@ -31,6 +44,18 @@ export default function Dashboard(){
         .then(data => setTasks(data))
         .catch(err => console.error(err));
     }, [token]);
+
+    //Cuando se abre el modal de la actualizacion caraga los datos
+    useEffect(() => {
+        if (taskToEdit) {
+            setEditTaskData({
+                titulo: taskToEdit.titulo,
+                descripcion: taskToEdit.descripcion,
+                fecha_estimada: taskToEdit.fecha_estimada?.split("T")[0] || "",
+                tiempo: taskToEdit.tiempo || ""
+            });
+        }
+    }, [taskToEdit]);
 
     //Conexion con el boton de nueva tarea
     const [showTaskModal, setShowTaskModal] = useState(false);
@@ -122,6 +147,37 @@ export default function Dashboard(){
         }
     };
 
+    //Función para actualizar la tarea
+    const handleUpdateTask = async () => {
+        try{
+            const response = await fetch(
+                `http://localhost:8000/tasks/${taskToEdit.task_id}`,
+                {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify(editTaskData)
+                }
+            );
+
+            const updatedTask = await response.json();
+
+            setTasks(prev =>
+                prev.map(t =>
+                    t.task_id === updatedTask.task_id ? updatedTask : t
+                )
+            );
+
+            setShowEditModal(false);
+            setTaskToEdit(null);
+        } catch (error) {
+            console.error(error);
+            alert("No se pudo actualizar la tarea");
+        }
+    };
+
     //Función para eliminar tareas
     const eliminarTarea = async (taskId) => {
         //Marca la tarea como saliendo
@@ -201,9 +257,30 @@ export default function Dashboard(){
                                                     ${taskEnteringId === task.task_id ? "enter-left" : ""}
                                                     ${taskLeavingId === task.task_id ? "exit-right" : ""}
                                                 `}
-                                                onClick={() => setSelectedTask(task)}
+                                                onClick={() => {
+                                                    //Esperamos un poco por si es un doble click
+                                                    clickTimeout.current = setTimeout(() => {
+                                                        setSelectedTask(task);
+                                                    }, 200);
+                                                }}
                                             >
-                                                <span>{task.titulo}</span>
+                                                <span 
+                                                    className="task-title"
+                                                    onDoubleClick={(e) => {
+                                                        e.stopPropagation();
+
+                                                        //Cancela el click simple
+                                                        if(clickTimeout.current) {
+                                                            clearTimeout(clickTimeout.current);
+                                                            clickTimeout.current = null;
+                                                        }
+
+                                                        setTaskToEdit(task);
+                                                        setShowEditModal(true);
+                                                    }}
+                                                >
+                                                    {task.titulo}
+                                                </span>
 
                                                 <div className="semaforo">
                                                     <div className={`luz verde ${task.prioridad === 3 ? "activa" : ""}`} />
@@ -218,7 +295,7 @@ export default function Dashboard(){
 
                                 <div className="activities-footer">
                                     <button className="manage-tasks-btn">
-                                        Adminitrar tareas
+                                        Administrar tareas
                                     </button>
                                 </div>
                             </div>
@@ -319,6 +396,63 @@ export default function Dashboard(){
                             Guardar
                         </button>
                     </div>
+                </div>
+            </div>
+        )}
+
+        {showEditModal && (
+            <div className="modal-overlay">
+                <div className="modal">
+                    <h2>Actualizar tarea</h2>
+
+                    <input
+                        type="text"
+                        name="titulo"
+                        value={editTaskData.titulo}
+                        onChange={(e) =>
+                            setEditTaskData ({ ...editTaskData, titulo: e.target.value })
+                        }
+                    />
+
+                    <textarea
+                        name="descripcion"  
+                        value={editTaskData.descripcion}
+                        onChange={(e) =>
+                            setEditTaskData({ ...editTaskData, descripcion: e.target.value })
+                        }
+                    />
+
+                    <input
+                        type="date"
+                        value={editTaskData.fecha_estimada}
+                        onChange={(e) =>
+                            setEditTaskData({ ...editTaskData, fecha_estimada: e.target.value })
+                        }
+                    />
+
+                    <input
+                        type="number"
+                        value={editTaskData.tiempo}
+                        onChange={(e) => 
+                            setEditTaskData({ ...editTaskData, tiempo: e.target.value })
+                        }
+                    />
+
+                    <div className="modal-actions">
+                        <button
+                            className="cancel-btn"
+                            onClick={() => setShowEditModal(false)}
+                        >
+                            Cancelar
+                        </button>
+
+                        <button
+                            className="add-task-btn"
+                            onClick={handleUpdateTask}
+                        >
+                            Guardar cambios
+                        </button>
+                    </div>    
                 </div>
             </div>
         )}

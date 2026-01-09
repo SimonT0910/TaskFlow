@@ -8,6 +8,7 @@ from app.schemas import TaskCreate
 from app.auth.dependencies import get_current_user
 from typing import List
 from app.schemas.task import TaskResponse
+from app.schemas.task import TaskUpdate
 
 router = APIRouter(
     prefix="/tasks",
@@ -85,7 +86,9 @@ def get_tasks(
             task_id=t.task_id,
             titulo=t.titulo,
             descripcion=t.descripcion,
-            estado_id=t.estado.nombre,
+            estado={
+                "nombre": t.estado.nombre
+            },
             prioridad=t.prioridad,
             fecha_estimada=t.fecha_estimada,
             tiempo=t.tiempo,
@@ -129,6 +132,48 @@ def get_task_detail(
         creado=tarea.creado,
         actualizado=tarea.actualizado
     )
+    
+#Verifica si la tarea existe para proceder con su debida actualizacion de ser pedida
+@router.patch("/{task_id}", response_model=TaskResponse)
+def update_task(
+    task_id: int,
+    task_data: TaskUpdate,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    #1. Buscar la tarea
+    tarea = db.query(Task).filter(
+        Task.task_id == task_id,
+        Task.usuario_id == current_user.usuario_id
+    ).first()
+    
+    if not tarea:
+        raise HTTPException(
+            status_code=404,
+            detail="Tarea no encontrada"
+        )
+        
+    #2. Actualizar solo los campos enviados
+    if task_data.titulo is not None:
+        tarea.titulo = task_data.titulo
+        
+    if task_data.descripcion is not None:
+        tarea.descripcion = task_data.descripcion
+        
+    if task_data.fecha_estimada is not None:
+        tarea.fecha_estimada = task_data.fecha_estimada
+    
+    if task_data.tiempo is not None:
+        tarea.tiempo = task_data.tiempo
+        
+    #3. Actualizar fecha de modificacion
+    tarea.actualizado = datetime.now()
+    
+    #4. Guardar cambios
+    db.commit()
+    db.refresh(tarea)
+    
+    return tarea
     
 #Eliminar la tarea
 @router.delete("/{task_id}", status_code=204)
