@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime
 from app.database import get_db
-from app.models import Task, Estado, Usuario
+from app.models import Task, Estado, Usuario, Historial
 from app.schemas import TaskCreate
 from app.auth.dependencies import get_current_user
 from typing import List
@@ -195,3 +195,52 @@ def delete_task(
     
     db.delete(task)
     db.commit()
+    
+#Asegura que la tarea exista para el cambio de estado
+@router.patch("/tasks/{task_id}/estado")
+def change(
+    task_id: int,
+    db: Session = Depends(get_db),
+    usuario = Depends(get_current_user)
+) :
+    #1. Buscar la tarea
+    task = db.query(Task).filter(
+        Task.task_id == task_id,
+        Task.usuario_id == usuario.usuario_id
+    ).first()
+    
+    if not task:
+        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+    
+    #2. Validar que no esté finalizada
+    if task.estado_id == 3:
+        raise HTTPException(
+            status_code=400,
+            detail="La tarea ya esta finalizada"
+        )
+    
+    anterior = task.estado_id
+    
+    #3. Logica de avance de estado
+    if task.estado_id == 1:
+        task.estado_id = 2
+    elif task.estado_id == 2:
+        task.estado_id = 3
+        
+    #4. Actualizar fecha
+    task.actualizado = datetime.now()
+    
+    #5. Guardar historial
+    historial = Historial(
+        task_id = task.task_id,
+        usuario_id = usuario.usuario_id,
+        anterior = anterior,
+        nuevo = task.estado_id,
+        comentario = "Cambio de estado por deslizamiento"
+    )
+    
+    db.add(historial)
+    db.commit()
+    db.refresh(task)
+    
+    return task

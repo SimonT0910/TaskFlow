@@ -220,6 +220,7 @@
     flex-direction: column;
     gap: 14px;
     overflow-y: auto;
+    overflow-x: hidden;
     padding-right: 4px;
 }
 
@@ -269,6 +270,7 @@
     justify-content: space-between;
     align-items: center;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
+    touch-action: pan-y;
     user-select: none;
 }
 
@@ -354,14 +356,26 @@
     gap: 12px;
 }
 
-.btn-ai {
-    background: #1e293b;
-    border: 1px solid var(--border-soft);
-    color: var(--muted);
-    padding: 8px 14px;
-    border-radius: 10px;
-    font-size: 13px;
-    cursor: not-allowed;
+.btn-ia {
+    background: #f0e1b6;
+    color: #000;
+    border: none;
+    padding: 12px 22px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-update {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 12px 22px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .btn-delete {

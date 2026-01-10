@@ -13,10 +13,13 @@ export default function Dashboard(){
     // Para animaciones de entrada y salida de actividades
     const [taskEnteringId, setTaskEnteringId] = useState(null); //identifica la tarea que acaba de entrar
     const [taskLeavingId, setTaskLeavingId] = useState(null); //Identifica la tarea que se va a eliminar
-
-    //Timeout para el doble click de actualizacion
-    const clickTimeout = React.useRef(null);
     
+    //Controla el desplazamiento de las tareas para cambios de estados
+    const [completedTask, setCompletedTask] = useState(null);
+    const [draggingTask, setDraggingTask] = useState(null);
+    const [dragStartX, setDragStartX] = useState(0);
+    const [dragX, setDragX] = useState({});
+
     //Control del mes y año en el calendario
     const [currentDate, setCurrentDate] = useState(new Date());
     const [activePanel, setActivePanel] = useState(null);
@@ -229,6 +232,40 @@ export default function Dashboard(){
         return fecha.split("T")[0]
     };
 
+    //Función para cambiar de estado
+    const avanzar = async (task) => {
+  try {
+    console.log("➡️ Avanzando tarea:", task.task_id, task.estado?.nombre);
+
+    const response = await fetch(
+      `http://localhost:8000/tasks/${task.task_id}/estado`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    const updatedTask = await response.json();
+
+    console.log("⬅️ Respuesta backend:", updatedTask.estado?.nombre);
+
+    setTasks(prev =>
+      prev.map(t =>
+        t.task_id === updatedTask.task_id ? updatedTask : t
+      )
+    );
+
+    if (updatedTask.estado.nombre === "Finalizado") {
+      setCompletedTask(updatedTask);
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+
     return (
         <div className="dashboard-layout">
             <Header setActivePanel={setActivePanel}/>
@@ -257,28 +294,68 @@ export default function Dashboard(){
                                                     ${taskEnteringId === task.task_id ? "enter-left" : ""}
                                                     ${taskLeavingId === task.task_id ? "exit-right" : ""}
                                                 `}
+
+                                                onMouseDown={(e) => {
+                                                    setDraggingTask(task.task_id);
+                                                    setDragStartX(e.clientX);
+                                                }}
+
+                                                onMouseMove={(e) => {
+                                                    if (draggingTask !== task.task_id) return;
+
+                                                    const diff = e.clientX -dragStartX;
+
+                                                    //Solo permite arrastrar a la derecha
+                                                    if (diff > 0) {
+                                                        setDragX(prev => ({
+                                                            ...prev,
+                                                            [task.task_id]: diff
+                                                        }));
+                                                    }
+                                                }}
+
+                                                onMouseUp={() => {
+                                                    if (draggingTask !== task.task_id) return;
+
+                                                    const desplazamiento = dragX[task.task_id] || 0;
+
+                                                    //Si pasa el umbral cambia de estado
+                                                    if (desplazamiento > 100) {
+                                                        avanzar(task);
+                                                    }
+
+                                                    //Reset visual
+                                                    setDragX(prev => ({
+                                                        ...prev,
+                                                        [task.task_id]: 0
+                                                    }));
+
+                                                    setDraggingTask(null);
+                                                }}
+
+                                                onMouseLeave={() => {
+                                                    //Seguridad si suelta fuera
+                                                    setDraggingTask(null);
+                                                    setDragX(prev => ({
+                                                        ...prev,
+                                                        [task.task_id]: 0
+                                                    }));
+                                                }}
+
+                                                style = {{
+                                                    transform: `translateX(${dragX[task.task_id] || 0}px)`,
+                                                    transition: draggingTask === task.task_id
+                                                        ? "none"
+                                                        : "transform 0.3s ease"
+                                                }}
+
                                                 onClick={() => {
-                                                    //Esperamos un poco por si es un doble click
-                                                    clickTimeout.current = setTimeout(() => {
+                                                    if (task.estado?.nombre !== "Finalizado") {
                                                         setSelectedTask(task);
-                                                    }, 200);
+                                                    }
                                                 }}
                                             >
-                                                <span 
-                                                    className="task-title"
-                                                    onDoubleClick={(e) => {
-                                                        e.stopPropagation();
-
-                                                        //Cancela el click simple
-                                                        if(clickTimeout.current) {
-                                                            clearTimeout(clickTimeout.current);
-                                                            clickTimeout.current = null;
-                                                        }
-
-                                                        setTaskToEdit(task);
-                                                        setShowEditModal(true);
-                                                    }}
-                                                >
+                                                <span>
                                                     {task.titulo}
                                                 </span>
 
@@ -288,6 +365,14 @@ export default function Dashboard(){
                                                     <div className={`luz roja ${task.prioridad === 1 ? "activa" : ""}`} />
 
                                                 </div>
+
+                                                {task.estado?.nombre === "En curso" && (
+                                                    <span className="estado-icon reloj">⏳</span>
+                                                )}
+
+                                                {task.estado?.nombre === "Finalizado" && (
+                                                    <span className="estado-icon check">✅</span>
+                                                )}
                                             </div>
                                         ))
                                     )}
@@ -475,14 +560,46 @@ export default function Dashboard(){
                     </div>
 
                     <div className="task-actions">
-                        <button className="btn-ai" disabled>Ayuda con IA</button>
-                        <button
-                            className="btn-delete"
-                            onClick={() => eliminarTarea(selectedTask.task_id)}
+                        <button className="btn-ia" disabled>Ayuda con IA</button>
+                        <button className="btn-update"
+                            onClick={() => {
+                                setTaskToEdit(selectedTask);
+                                setSelectedTask(null);
+                                setShowEditModal(true);
+                            }}
                         >
-                            Eliminar
+                            Actualizar
                         </button>
                     </div>
+                </div>
+            </div>
+        )}
+
+        {completedTask && (
+            <div className="task-modal-overlay">
+                <div className="task-modal completed">
+                    <h2>✅ Tarea finalizada</h2>
+
+                    <p>
+                        Has finalizado esta tarea.
+                        Si deseas, puedes eliminarla de tu lista.
+                    </p>
+
+                    <div className="big-check">✔</div>
+
+                    <button
+                        className="btn-delete"
+                        onClick={() => eliminarTarea(completedTask.task_id)}
+                    >
+                        Eliminar tarea
+                    </button>
+
+                    <button
+                        className="cancel-btn"
+                        onClick={() => setCompletedTask(null)}
+                    >
+                        Cerrar
+                    </button>
                 </div>
             </div>
         )}
