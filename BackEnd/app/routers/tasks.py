@@ -15,17 +15,12 @@ router = APIRouter(
     tags=["Tasks"]
 )
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=TaskResponse)
 def create_task(
     task: TaskCreate,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
-):
-    """
-    Crea una nueva tarea para el usuario autenticado.
-    El estado siempre inicia en 'Pendiente'.
-    """
-    
+):  
     #1. Buscar el estado "Pendiente"
     estado_pendiente = (
         db.query(Estado).filter(Estado.nombre == "Pendiente").first()
@@ -176,37 +171,86 @@ def update_task(
     return tarea
     
 #Eliminar la tarea
-@router.delete("/{task_id}", status_code=204)
+@router.delete("/delete/{task_id}", status_code=status.HTTP_200_OK)
 def delete_task(
-    task_id: int,
-    db: Session = Depends(get_db),
-    usuario = Depends(get_current_user)
-):
+    task_id: int, 
+    db: Session = Depends(get_db), 
+    current_user: Usuario = Depends(get_current_user)
+    ):
     task = db.query(Task).filter(
         Task.task_id == task_id,
-        Task.usuario_id == usuario.usuario_id
-    ).first()
-    
+        Task.usuario_id == current_user.usuario_id
+        ).first()
+
     if not task:
-        raise HTTPException(
-            status_code=404,
-            detail="Tarea no encontrada"
-        )
+        raise HTTPException(status_code=404, detail="Tarea no encontrada")
     
+    if task.estado.nombre != "Finalizado":
+        raise HTTPException(
+            status_code=400,
+            detail="Solo se pueden eliminar tareas finalizadas"
+        )
+        
+    #Eliminar primero el historial
+    db.query(Historial).filter(
+        Historial.task_id == task.task_id
+    ).delete(synchronize_session=False)
+
     db.delete(task)
     db.commit()
     
+    return {"message": "Tarea eliminada correctamente"}
+
+#Eliminación masiva
+@router.delete("/delete-completed")
+def delete_completed(
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    #1. Buscar tareas finalizadas del usuario
+    final = (
+        db.query(Task).join(Estado).filter(
+            Task.usuario_id == current_user.usuario_id,
+            Estado.nombre == "Finalizado"
+        ).all()
+    )
+    
+    if not final:
+        return {
+            "deleted": 0,
+            "message": "No hay tareas finalizadas para eliminar"
+        }
+    
+    #2. Obtener IDs de tareas
+    task_ids = [t.task_id for t in final]
+    
+    #3. Eliminar historial asociado
+    db.query(Historial).filter(
+        Historial.task_id.in_(task_ids)
+    ).delete(synchronize_session=False)
+    
+    #4. Eliminar tareas
+    for task in final:
+        db.delete(task)
+        
+    db.commit()
+    
+    return {
+        "deleted": len(task_ids),
+        "message": f"Se eliminaron {len(task_ids)} tareas finalizadas"
+    }
+    
 #Asegura que la tarea exista para el cambio de estado
-@router.patch("/tasks/{task_id}/estado")
+@router.patch("/{task_id}/estado", response_model=TaskResponse)
 def change(
     task_id: int,
     db: Session = Depends(get_db),
-    usuario = Depends(get_current_user)
+    current_user: Usuario = Depends(get_current_user)
 ) :
     #1. Buscar la tarea
     task = db.query(Task).filter(
         Task.task_id == task_id,
-        Task.usuario_id == usuario.usuario_id
+        Task.usuario_id == current_user.usuario_id
     ).first()
     
     if not task:
@@ -222,25 +266,25 @@ def change(
     anterior = task.estado_id
     
     #3. Logica de avance de estado
-    if task.estado_id == 1:
-        task.estado_id = 2
-    elif task.estado_id == 2:
-        task.estado_id = 3
+    if task.estado.nombre == "Pendiente":
+        nuevo = db.query(Estado).filter(Estado.nombre == "En curso").first()
+    elif task.estado.nombre == "En curso":
+        nuevo = db.query(Estado).filter(Estado.nombre == "Finalizado").first()
         
     #4. Actualizar fecha
+    task.estado_id = nuevo.estado_id
     task.actualizado = datetime.now()
     
     #5. Guardar historial
     historial = Historial(
         task_id = task.task_id,
-        usuario_id = usuario.usuario_id,
-        anterior = anterior,
-        nuevo = task.estado_id,
-        comentario = "Cambio de estado por deslizamiento"
+        usuario_id = current_user.usuario_id,
+        estado_anterior = anterior,
+        nuevo_estado = nuevo.estado_id,
     )
     
     db.add(historial)
     db.commit()
     db.refresh(task)
     
-    return task
+    return task 

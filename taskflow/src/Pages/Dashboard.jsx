@@ -10,15 +10,15 @@ export default function Dashboard(){
     //Tarea seleccionada
     const [selectedTask, setSelectedTask] = useState(null);
 
-    // Para animaciones de entrada y salida de actividades
-    const [taskEnteringId, setTaskEnteringId] = useState(null); //identifica la tarea que acaba de entrar
-    const [taskLeavingId, setTaskLeavingId] = useState(null); //Identifica la tarea que se va a eliminar
+    // Para identidicar entrada de actividades
+    const [taskEnteringId, setTaskEnteringId] = useState(null); 
+    const [bulkModal, setBulkModal] = useState(false); //Muestra modal para eliminación masiva
+    const [completeCount, setCompleteCount] = useState(0);
+    const [bulkDelete, setBulkDelete] = useState(null);
     
     //Controla el desplazamiento de las tareas para cambios de estados
     const [completedTask, setCompletedTask] = useState(null);
-    const [draggingTask, setDraggingTask] = useState(null);
-    const [dragStartX, setDragStartX] = useState(0);
-    const [dragX, setDragX] = useState({});
+    const [animatingTaskId, setAnimatingTaskId] = useState(null);
 
     //Control del mes y año en el calendario
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -133,6 +133,10 @@ export default function Dashboard(){
             //Marca esta tarea como entrante
             setTaskEnteringId(nuevaTarea.task_id);
 
+            setTimeout(() => {
+                setTaskEnteringId(null);
+            }, 400);
+
             //Limpiar el formulario
             setTaskData({
                 titulo: "",
@@ -183,22 +187,61 @@ export default function Dashboard(){
 
     //Función para eliminar tareas
     const eliminarTarea = async (taskId) => {
-        //Marca la tarea como saliendo
-        setTaskLeavingId(taskId);
-
-        setTimeout(async () => {
-            await fetch(`http://localhost:8000/tasks/${taskId}`, {
-                method: "DELETE",
-                headers: {
-                    Authorization: `Bearer ${token}`
+        try {
+            const response = await fetch(
+                `http://localhost:8000/tasks/delete/${taskId}`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
                 }
-            });
+            );
 
-            //Quita el estado
+            if (!response.ok) {
+                throw new Error("Error al eliminar la tarea");
+            }
+
+            // Elimina la tarea del estado
             setTasks(prev => prev.filter(t => t.task_id !== taskId));
-            setSelectedTask(null);
-            setTaskLeavingId(null);
-        }, 400);
+            setCompletedTask(null);
+
+        } catch (error) {
+            console.error("DELETE ERROR:", error);
+            alert("No se pudo eliminar la tarea. Revisa el backend.");
+        }
+    };
+
+    //Eliminar las tareas acumuladas como finalizadas
+    const eliminarTodo = async () => {
+        try {
+            const response = await fetch(
+                `http://localhost:8000/tasks/delete-completed`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Error al eliminar");
+            }
+
+            //Quitar del estado todas las finalizadas
+            setTasks(prev =>
+                prev.filter(t => t.estado?.nombre !== "Finalizado")
+            );
+
+            setBulkDelete(data.message);
+            setBulkModal(false);
+        } catch (error) {
+            console.error(error);
+            alert("Error eliminando tareas finalizadas")
+        }
     };
 
     //Guarda el Token desde el frontend
@@ -234,37 +277,44 @@ export default function Dashboard(){
 
     //Función para cambiar de estado
     const avanzar = async (task) => {
-  try {
-    console.log("➡️ Avanzando tarea:", task.task_id, task.estado?.nombre);
+    try {
+        setAnimatingTaskId(task.task_id);
 
-    const response = await fetch(
-      `http://localhost:8000/tasks/${task.task_id}/estado`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
-    );
+        setTimeout(async () => {
+            const response = await fetch(
+                `http://localhost:8000/tasks/${task.task_id}/estado`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
 
-    const updatedTask = await response.json();
+            if (!response.ok) {
+                throw new Error("Error al cambiar estado");
+            }
 
-    console.log("⬅️ Respuesta backend:", updatedTask.estado?.nombre);
+            const updatedTask = await response.json();
 
-    setTasks(prev =>
-      prev.map(t =>
-        t.task_id === updatedTask.task_id ? updatedTask : t
-      )
-    );
+            setTasks(prev =>
+                prev.map(t =>
+                    t.task_id === updatedTask.task_id ? updatedTask : t
+                )
+            );
 
-    if (updatedTask.estado.nombre === "Finalizado") {
-      setCompletedTask(updatedTask);
+            if (updatedTask.estado.nombre === "Finalizado") {
+                setCompletedTask(updatedTask);
+            }
+
+            setAnimatingTaskId(null);
+        }, 400);
+
+    } catch (error) {
+        console.error(error);
+        setAnimatingTaskId(null);
     }
-  } catch (error) {
-    console.error(error);
-  }
 };
-
 
     return (
         <div className="dashboard-layout">
@@ -278,6 +328,20 @@ export default function Dashboard(){
                             <div className="activities-panel slide-in">
                                 <div className="activities-header">
                                     <h2>📊 Actividades</h2>
+
+                                    <button
+                                        className="bulk-delete-btn"
+                                        onClick={() => {
+                                            const count = tasks.filter(
+                                                t => t.estado?.nombre === "Finalizado"
+                                            ).length;
+
+                                            setCompleteCount(count);
+                                            setBulkModal(true);
+                                        }}
+                                    >
+                                        🗑️
+                                    </button>
                                 </div>
 
                                 <div className="activities-content">
@@ -292,87 +356,45 @@ export default function Dashboard(){
                                                 key={task.task_id}
                                                 className={`activities-card
                                                     ${taskEnteringId === task.task_id ? "enter-left" : ""}
-                                                    ${taskLeavingId === task.task_id ? "exit-right" : ""}
+                                                    ${animatingTaskId === task.task_id ? "exit-right" : ""}
                                                 `}
-
-                                                onMouseDown={(e) => {
-                                                    setDraggingTask(task.task_id);
-                                                    setDragStartX(e.clientX);
-                                                }}
-
-                                                onMouseMove={(e) => {
-                                                    if (draggingTask !== task.task_id) return;
-
-                                                    const diff = e.clientX -dragStartX;
-
-                                                    //Solo permite arrastrar a la derecha
-                                                    if (diff > 0) {
-                                                        setDragX(prev => ({
-                                                            ...prev,
-                                                            [task.task_id]: diff
-                                                        }));
-                                                    }
-                                                }}
-
-                                                onMouseUp={() => {
-                                                    if (draggingTask !== task.task_id) return;
-
-                                                    const desplazamiento = dragX[task.task_id] || 0;
-
-                                                    //Si pasa el umbral cambia de estado
-                                                    if (desplazamiento > 100) {
-                                                        avanzar(task);
-                                                    }
-
-                                                    //Reset visual
-                                                    setDragX(prev => ({
-                                                        ...prev,
-                                                        [task.task_id]: 0
-                                                    }));
-
-                                                    setDraggingTask(null);
-                                                }}
-
-                                                onMouseLeave={() => {
-                                                    //Seguridad si suelta fuera
-                                                    setDraggingTask(null);
-                                                    setDragX(prev => ({
-                                                        ...prev,
-                                                        [task.task_id]: 0
-                                                    }));
-                                                }}
-
-                                                style = {{
-                                                    transform: `translateX(${dragX[task.task_id] || 0}px)`,
-                                                    transition: draggingTask === task.task_id
-                                                        ? "none"
-                                                        : "transform 0.3s ease"
-                                                }}
-
                                                 onClick={() => {
                                                     if (task.estado?.nombre !== "Finalizado") {
                                                         setSelectedTask(task);
+                                                    } else {
+                                                        setCompletedTask(task);
                                                     }
                                                 }}
                                             >
-                                                <span>
-                                                    {task.titulo}
-                                                </span>
+                                                <span className="task-title">{task.titulo}</span>
 
-                                                <div className="semaforo">
-                                                    <div className={`luz verde ${task.prioridad === 3 ? "activa" : ""}`} />
-                                                    <div className={`luz amarilla ${task.prioridad === 2 ? "activa" : ""}`} />
-                                                    <div className={`luz roja ${task.prioridad === 1 ? "activa" : ""}`} />
+                                                <div className="task-actions-right">
+                                                    <div className="semaforo">
+                                                        <div className={`luz verde ${task.prioridad === 3 ? "activa" : ""}`} />
+                                                        <div className={`luz amarilla ${task.prioridad === 2 ? "activa" : ""}`} />
+                                                        <div className={`luz roja ${task.prioridad === 1 ? "activa" : ""}`} />
+                                                    </div>
 
+                                                    {task.estado?.nombre === "En curso" && (
+                                                        <span className="estado-icon reloj">⏳</span>
+                                                    )}
+
+                                                    {task.estado?.nombre === "Finalizado" && (
+                                                        <span className="estado-icon check">✅</span>
+                                                    )}
+
+                                                    {task.estado?.nombre !== "Finalizado" && (
+                                                        <button
+                                                            className="advance-btn"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                avanzar(task);
+                                                            }}
+                                                        >
+                                                            ➜
+                                                        </button>
+                                                    )}
                                                 </div>
-
-                                                {task.estado?.nombre === "En curso" && (
-                                                    <span className="estado-icon reloj">⏳</span>
-                                                )}
-
-                                                {task.estado?.nombre === "Finalizado" && (
-                                                    <span className="estado-icon check">✅</span>
-                                                )}
                                             </div>
                                         ))
                                     )}
@@ -601,6 +623,48 @@ export default function Dashboard(){
                         Cerrar
                     </button>
                 </div>
+            </div>
+        )}
+
+        {bulkModal && (
+            <div className="task-modal-overlay">
+                <div className="task-modal completed">
+                    <h2>Eliminar tareas finalizadas</h2>
+
+                    {completeCount === 0 ? (
+                        <p>No hay tareas finalizadas para eliminar.</p>
+                    ) : (
+                        <p>
+                            Se elimarán <b>{completeCount}</b> tareas finalizadas.
+                            <br />
+                            ¿Deseas continuar?
+                        </p>
+                    )}
+
+                    <div className="task-actions">
+                        {completeCount > 0 && (
+                            <button
+                                className="btn-delete"
+                                onClick={eliminarTodo}
+                            >
+                                Eliminar todas
+                            </button>
+                        )}
+
+                        <button
+                            className="cancel-btn"
+                            onClick={() => setBulkModal(false)}
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {bulkDelete && (
+            <div className="toast">
+                {bulkDelete}
             </div>
         )}
         </div>

@@ -270,14 +270,13 @@
     justify-content: space-between;
     align-items: center;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
-    touch-action: pan-y;
-    user-select: none;
 }
 
 .activities-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 10px 25px rgba(0, 255, 255, 0.15);
 }
+
 
 /* Semaforo de prioridades */
 .semaforo {
@@ -508,4 +507,61 @@
     .sidebar-item .label {
         display: none;
     }
+}
+
+/* Contenedor derecho de la card */
+.card-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Botón de cambio de estado */
+.advance-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    opacity: 0.85;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.6));
+}
+
+.advance-btn:hover {
+    transform: translateX(4px) scale(1.1);
+    opacity: 1;
+}
+
+/* Iconos de estado */
+.estado-icon {
+    font-size: 16px;
+    margin-left: 4px;
+}
+
+.estado-icon.reloj {
+    color: #facc15;
+}
+
+.estado-icon.check {
+    color: #22c55e;
+}
+
+/* Modal para eliminación masiva */
+.bulk-delete-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.bulk-delete-btn:hover {
+    transform: scale(1.1);
+    background-color: rgba(0, 0, 0, 0.5);
 }
