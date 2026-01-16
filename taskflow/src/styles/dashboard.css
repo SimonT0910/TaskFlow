@@ -565,3 +565,59 @@
     transform: scale(1.1);
     background-color: rgba(0, 0, 0, 0.5);
 }
+
+/* CSS del calendario con sus respectivas tareas */
+.month-calendar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.calendar-week {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+}
+
+.calendar-day {
+    min-height: 140px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 14px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.day-number {
+    font-size: 14px;
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.calendar-task {
+    padding: 8px 10px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.calendar-task:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 255, 255, 0.2);
+}
+
+/* Estados de los rectangulos en el calendario */
+.calendar-task.pending {
+    background: rgba(239, 68, 68, 0.85);
+}
+
+.calendar-task.in-progress {
+    background: rgba(250, 204, 21, 0.85);
+}
+
+.calendar-task.done {
+    background: rgba(34, 197, 94, 0.85);
+}

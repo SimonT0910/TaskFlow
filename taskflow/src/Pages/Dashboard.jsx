@@ -277,44 +277,109 @@ export default function Dashboard(){
 
     //Función para cambiar de estado
     const avanzar = async (task) => {
-    try {
-        setAnimatingTaskId(task.task_id);
+        try {
+            setAnimatingTaskId(task.task_id);
 
-        setTimeout(async () => {
-            const response = await fetch(
-                `http://localhost:8000/tasks/${task.task_id}/estado`,
-                {
-                    method: "PATCH",
-                    headers: {
-                        Authorization: `Bearer ${token}`
+            setTimeout(async () => {
+                const response = await fetch(
+                    `http://localhost:8000/tasks/${task.task_id}/estado`,
+                    {
+                        method: "PATCH",
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
                     }
+                );
+
+                if (!response.ok) {
+                    throw new Error("Error al cambiar estado");
                 }
-            );
 
-            if (!response.ok) {
-                throw new Error("Error al cambiar estado");
-            }
+                const updatedTask = await response.json();
 
-            const updatedTask = await response.json();
+                setTasks(prev =>
+                    prev.map(t =>
+                        t.task_id === updatedTask.task_id ? updatedTask : t
+                    )
+                );
 
-            setTasks(prev =>
-                prev.map(t =>
-                    t.task_id === updatedTask.task_id ? updatedTask : t
-                )
-            );
+                if (updatedTask.estado.nombre === "Finalizado") {
+                    setCompletedTask(updatedTask);
+                }
 
-            if (updatedTask.estado.nombre === "Finalizado") {
-                setCompletedTask(updatedTask);
-            }
+                setAnimatingTaskId(null);
+            }, 400);
 
+        } catch (error) {
+            console.error(error);
             setAnimatingTaskId(null);
-        }, 400);
+        }
+    };
 
-    } catch (error) {
-        console.error(error);
-        setAnimatingTaskId(null);
-    }
-};
+    //Filtrar las tareas por el día
+    const formatLocalDate = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    };
+
+    const getTasksForDay = (date) => {
+        const dayString = formatLocalDate(date);
+        const todayString = formatLocalDate(new Date());
+
+        return tasks.filter(task => {
+            if (!task.fecha_estimada) {
+                return dayString === todayString;
+            }
+            return task.fecha_estimada.slice(0, 10) === dayString;
+        });
+    };
+
+    //Calendario mensual
+    const getMonthGrid = (date) => {
+        const year = date.getFullYear();
+        const month = date.getMonth();
+
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+
+        const weeks = [];
+        let week = [];
+
+        //Convertimos domingo (0) a 7
+        let startDay = firstDay.getDay();
+        if (startDay === 0) startDay = 7;
+        
+        //Espacios vacios antes del primer dia real
+        for (let i = 1; i < startDay; i++) {
+            if(i<=5) week.push(null);
+        }
+
+        //Dias del mes
+        for (let d = 1; d <= lastDay.getDate(); d++) {
+            const current = new Date(year, month, d);
+            const day = current.getDay();
+
+            //Solo lunes a viernes
+            if (day >= 1 && day <= 5) {
+                week.push(current);
+            }
+
+            if (week.length === 5) {
+                weeks.push(week);
+                week=[];
+            }
+        }
+
+        if (week.length > 0) {
+            weeks.push(week);
+        }
+
+        return weeks;
+    };
+
+    const monthWeeks = getMonthGrid(currentDate);
 
     return (
         <div className="dashboard-layout">
@@ -429,23 +494,46 @@ export default function Dashboard(){
                             </div>
 
                             <div className="calendar-grid">
-                                <div className="calendar-days">
-                                    <div></div>
-                                    <div>Lunes</div>
-                                    <div>Martes</div>
-                                    <div>Miércoles</div>
-                                    <div>Jueves</div>
-                                    <div>Viernes</div>
-                                </div>
 
-                                <div className="calendar-body">
-                                    {[...Array(10)].map((_, hour) => (
-                                        <div className="calendar-row" key={hour}>
-                                            <div className="hour">{8 + hour}:00</div>
+                                <div className="month-calendar">
+                                    <div className="calendar-header">
+                                        {["Lunes", "Martes", "Miercoles", "Jueves", "Viernes"].map(day => (
+                                            <div key={day} className="header-cell">{day}</div>
+                                        ))}
+                                    </div>
 
-                                            {[...Array(5)].map((_, day) => (
-                                                <div className="cell" key={day}></div>
-                                            ))}
+                                    {monthWeeks.map((week, i) => (
+                                        <div className="calendar-week" key={i}>
+                                            {week.map((date, idx) => {
+
+                                                return (
+                                                    <div className="calendar-day" key={idx}>
+                                                        {date && (
+                                                            <>
+                                                                <div className="day-number">
+                                                                    {date.getDate()}
+                                                                </div>
+
+                                                                {getTasksForDay(date).map(task => (
+                                                                    <div
+                                                                        key={task.task_id}
+                                                                        className={`calendar-task ${
+                                                                            task.estado?.nombre === "Pendiente"
+                                                                                ? "pending"
+                                                                                : task.estado?.nombre === "En curso"
+                                                                                ? "in-progress"
+                                                                                : "done"
+                                                                        }`}
+                                                                        onClick={() => setSelectedTask(task)}
+                                                                    >
+                                                                        {task.titulo}
+                                                                    </div>
+                                                                ))}
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     ))}
                                 </div>
