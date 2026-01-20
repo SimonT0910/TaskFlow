@@ -189,12 +189,55 @@ Elimina una tarea.
 
 **Endpoint**
 DELETE /tasks/{id}
-Authorization: Bearer {token}
+Authorization: `Bearer ${token}`
 
 **Respuesta Exitosa (200)**
 ```json
 {
   "status": "success",
   "message": "Tarea eliminada exitosamente"
+}
+```
+
+### Eliminación masiva 
+
+Eliminación masiva de las tareas con el estado "Finalizado".
+
+**Endpoint**
+DELETE/delete-completed
+Authorization: `Bearer ${token}`
+
+**Respuesta Exitosa (200)**
+```json
+{
+  "status": "success",
+  "message": "Tareas eliminadas exitosamente"
+}
+```
+
+### Cambiar estado
+
+Cambio de estado de las tareas.
+
+**Endpoint**
+PATCH/tasks/task_id/estado
+Authorization: `Bearer ${token}`
+
+**Respuesta Exitosa (200)**
+```json
+{
+  "status": "success",
+  "data": {
+    "task_id": 1,
+    "titulo": "Ejemplo de cambio",
+    "descripcion": "Descripción del ejemplo",
+    "estado_id": 2,
+    "estado_nombre": "En curso",
+    "prioridad": 1,
+    "fecha_estimada": "2026-01-20",
+    "tiempo": 5,
+    "actualizado": "2026-01-20T15:30:00"
+  },
+  "message": "Estado cambiado de 'Pendiente' a 'En curso'"
 }
 ```
