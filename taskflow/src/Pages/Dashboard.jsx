@@ -24,6 +24,9 @@ export default function Dashboard(){
     const [currentDate, setCurrentDate] = useState(new Date());
     const [activePanel, setActivePanel] = useState(null);
 
+    //Mensajes de error para fechas pasadas
+    const [dateError, setDateError] = useState("");
+
     //Componentes para la actualizacion de las tareas
     const [showEditModal, setShowEditModal] = useState(false);
     const [taskToEdit, setTaskToEdit] = useState(null);
@@ -106,6 +109,13 @@ export default function Dashboard(){
 
             console.log("token enviado: ", token);
 
+            if (past(taskData.fecha_estimada)){
+                setDateError(`No es posible colocar actividades en una fecha anterior al día de hoy.
+                    Fecha actual: ${getToday().toLocaleDateString()}`
+                );
+                return;
+            };
+
             const response = await fetch("http://localhost:8000/tasks/", {
                 method: "POST",
                 headers: {
@@ -157,6 +167,14 @@ export default function Dashboard(){
     //Función para actualizar la tarea
     const handleUpdateTask = async () => {
         try{
+            
+            if (past(editTaskData.fecha_estimada)){
+                setDateError(`No es posible colocar actividades en una fecha anterior al día de hoy.
+                    Fecha actual: ${getToday().toLocaleDateString()}`
+                );
+                return;
+            };
+
             const response = await fetch(
                 `http://localhost:8000/tasks/${taskToEdit.task_id}`,
                 {
@@ -381,6 +399,70 @@ export default function Dashboard(){
 
     const monthWeeks = getMonthGrid(currentDate);
 
+    //Para el funcionamiento del drag-and-drop de las actividades del calendario
+    const handleTaskDrop = async (taskId, date) => {
+        try {
+            if (!date) return;
+
+            if (past(formatLocalDate(date))){
+                setDateError(`No es posible colocar actividades en una fecha anterior al día de hoy.
+                    Fecha actual: ${getToday().toLocaleDateString()}`
+                );
+                return;
+            };
+
+            const fromattedDate = formatLocalDate(date);
+
+            const response = await fetch(
+                `http://localhost:8000/tasks/${taskId}`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        fecha_estimada: fromattedDate
+                    })
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error("Error actualizado fecha");
+            }
+
+            const updatedTask = await response.json();
+
+            setTasks(prev => 
+                prev.map(task =>
+                    task.task_id === updatedTask.task_id
+                    ? updatedTask
+                    : task
+                )
+            );
+
+        } catch (error) {
+            console.error("Error al mover la tarea", error);
+        }
+    };
+
+    //Devuelve la fecha de hoy sin hora
+    const getToday = () => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return today;
+    };
+
+    //Valida la fecha estimada para que no se escoja la fecha anterior al dia de hoy
+    const past = (date) => {
+        if (!date) return false;
+
+        const selectedDate = new Date(date);
+        selectedDate.setHours(0, 0, 0, 0);
+        
+        return selectedDate < getToday();
+    }
+
     return (
         <div className="dashboard-layout">
             <Header setActivePanel={setActivePanel}/>
@@ -506,11 +588,23 @@ export default function Dashboard(){
                                         <div className="calendar-week" key={i}>
                                             {week.map((date, idx) => {
 
+                                                const isToday = date && date.toDateString() === new Date().toDateString();
+
                                                 return (
-                                                    <div className="calendar-day" key={idx}>
+                                                    <div className="calendar-day" 
+                                                    key={idx}
+                                                    onDragOver={(e) => e.preventDefault()}
+                                                    onDrop={(e) => {
+                                                        const taskId = e.dataTransfer.getData("taskId");
+
+                                                        if (!taskId) return;
+
+                                                        handleTaskDrop(taskId, date);
+                                                    }}
+                                                    >
                                                         {date && (
                                                             <>
-                                                                <div className="day-number">
+                                                                <div className={`day-number ${isToday ? "today" : ""}`}>
                                                                     {date.getDate()}
                                                                 </div>
 
@@ -524,6 +618,10 @@ export default function Dashboard(){
                                                                                 ? "in-progress"
                                                                                 : "done"
                                                                         }`}
+                                                                        draggable={task.estado?.nombre !== "Finalizado"}
+                                                                        onDragStart={(e) => {
+                                                                            e.dataTransfer.setData("taskId", task.task_id.toString());
+                                                                        }}
                                                                         onClick={() => setSelectedTask(task)}
                                                                     >
                                                                         {task.titulo}
@@ -574,6 +672,11 @@ export default function Dashboard(){
                     name="fecha_estimada"
                     value={taskData.fecha_estimada}
                     onChange={handleChange}/>
+                    {dateError && (
+                        <p className="date-error">
+                            {dateError}
+                        </p>
+                    )}
 
                     <input type="number" 
                     name="tiempo"

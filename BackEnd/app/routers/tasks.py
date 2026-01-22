@@ -288,3 +288,19 @@ def change(
     db.refresh(task)
     
     return task 
+
+#Utiliza la funcion drag-and-drop para mover las actividades en el calendario
+@router.patch("/tasks/{task_id}")
+def update_date(task_id: int, data: dict, db: Session = Depends(get_db)):
+    task = db.query(Task).filter(Task.id == task_id).first()
+    
+    if not task:
+        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+    
+    if task.estado == "Finalizado":
+        raise HTTPException(status_code=400, detail="No se puede mover una tarea finalizada")
+    
+    task.fecha_estimada = data["fecha_estimada"]
+    db.commit()
+    
+    return {"message": "Fecha actualizada correctamente"}

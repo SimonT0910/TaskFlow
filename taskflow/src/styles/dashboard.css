@@ -587,6 +587,11 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
+    transition: background-color 0.2s;
+}
+
+.calendar-day:hover {
+    background-color: #f3f4f6;
 }
 
 .day-number {
@@ -620,4 +625,39 @@
 
 .calendar-task.done {
     background: rgba(34, 197, 94, 0.85);
+}
+
+/* Estilo y animación para el movimiento de las actividades */
+.task-card {
+    cursor: grab;
+    transition: transform 0.2s ease;
+}
+
+.task-card:active {
+    cursor: grabbing;
+    transform: scale(1.05);
+}
+
+.task-card.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.date-error {
+    color: #ff4d4f;
+    font-size: 0.85rem;
+    margin-top: 4px;
+}
+
+/* Circulo que muestra el dia de hoy */
+.day-number.today {
+    background-color: #ffffff;
+    color: #000;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
 }

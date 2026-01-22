@@ -220,8 +220,8 @@ Authorization: `Bearer ${token}`
 Cambio de estado de las tareas.
 
 **Endpoint**
-PATCH/tasks/task_id/estado
-Authorization: `Bearer ${token}`
+PATCH /tasks/task_id/estado
+Authorization: Bearer ${token}
 
 **Respuesta Exitosa (200)**
 ```json
@@ -236,7 +236,41 @@ Authorization: `Bearer ${token}`
     "prioridad": 1,
     "fecha_estimada": "2026-01-20",
     "tiempo": 5,
-    "actualizado": "2026-01-20T15:30:00"
+    "actualizado": "2026-01-20"
+  },
+  "message": "Estado cambiado de 'Pendiente' a 'En curso'"
+}
+```
+
+### Función de drag-and-drop
+
+Una función que permite agarrar las actividades y cambiarlas en el calendario de manera dinamica
+
+**Endpoint**
+PATCH /tasks/{task_id}
+Authorization: Bearer {token}
+Content-Type: application/json
+
+**Body**
+```json
+{
+  "fecha_estimada": "2026-01-25"
+}
+```
+
+**Respuesta Exitosa (200)**
+```json
+{
+  "status": "success",
+  "data": {
+    "task_id": 1,
+    "titulo": "Ejemplo drag-and-drop",
+    "descripcion": "Descripción del ejemplo",
+    "estado_id": 1,
+    "prioridad": 1,
+    "fecha_estimada": "2026-01-27",
+    "tiempo": 5,
+    "actualizado": "2026-01-20"
   },
   "message": "Estado cambiado de 'Pendiente' a 'En curso'"
 }
