@@ -25,8 +25,11 @@ class TaskResponse(BaseModel):
     prioridad: int
     fecha_estimada: date | None
     tiempo: int | None
+    asignado: bool
     creado: datetime
     actualizado: datetime
+    asignado: Optional[int] = None
+    admin_in: bool
     
     class Config:
         orm_mode = True
@@ -36,3 +39,13 @@ class EstadoOut(BaseModel):
     
     class Config:
         from_attributes = True
+
+#Para las tareas asignadas por el administrador        
+class AdminTasks(BaseModel):
+    titulo: str
+    descripcion: str
+    prioridad: int | None = None
+    fecha_estimada: date
+    tiempo: int
+    usuario_id: int
+    proyecto_id: int

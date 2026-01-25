@@ -9,6 +9,7 @@ from app.auth.dependencies import get_current_user
 from typing import List
 from app.schemas.task import TaskResponse
 from app.schemas.task import TaskUpdate
+from app.schemas.task import AdminTasks
 
 router = APIRouter(
     prefix="/tasks",
@@ -147,6 +148,10 @@ def update_task(
             status_code=404,
             detail="Tarea no encontrada"
         )
+        
+    #Si la tarea es del adminitrador
+    if Task.asignado:
+        raise HTTPException(status_code=403, detail="Las tareas asignadas por el administrador no pueden editarse")
         
     #2. Actualizar solo los campos enviados
     if task_data.titulo is not None:
@@ -304,3 +309,35 @@ def update_date(task_id: int, data: dict, db: Session = Depends(get_db)):
     db.commit()
     
     return {"message": "Fecha actualizada correctamente"}
+
+#Ruta para crear tareas como un administrador
+@router.post("/admin", status_code=201, response_model=TaskResponse)
+def task_admin(
+    task: AdminTasks,
+    db: Session = Depends(get_db),
+    current_user: Usuario =  Depends(get_current_user)
+):
+    estado_pendiente = db.query(Estado).filter(
+        Estado.nombre == "Pendiente"
+    ).first()
+    
+    nueva_tarea = Task(
+        titulo=task.titulo,
+        descripcion=task.descripcion,
+        prioridad=task.prioridad,
+        fecha_estimada=task.fecha_estimada,
+        tiempo=task.tiempo,
+        usuario_id=task.usuario_id,
+        proyecto_id=task.proyecto_id,
+        estado_id=estado_pendiente.estado_id,
+        asignado=True,
+        admin_id=current_user.usuario_id,
+        creado=datetime.now(),
+        actualizado=datetime.now()
+    )
+    
+    db.add(nueva_tarea)
+    db.commit()
+    db.refresh(nueva_tarea)
+    
+    return nueva_tarea

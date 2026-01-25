@@ -343,6 +343,8 @@ export default function Dashboard(){
     };
 
     const getTasksForDay = (date) => {
+        if (!Array.isArray(tasks)) return [];
+
         const dayString = formatLocalDate(date);
         const todayString = formatLocalDate(new Date());
 
@@ -402,6 +404,12 @@ export default function Dashboard(){
     //Para el funcionamiento del drag-and-drop de las actividades del calendario
     const handleTaskDrop = async (taskId, date) => {
         try {
+            const task = tasks.find(t => t.task_id === taskId);
+            if (task?.admin_in) {
+                alert("Esta tarea fue asignada por el administrador y no puede ser modificada");
+                return;
+            }
+
             if (!date) return;
 
             if (past(formatLocalDate(date))){
@@ -513,7 +521,10 @@ export default function Dashboard(){
                                                     }
                                                 }}
                                             >
-                                                <span className="task-title">{task.titulo}</span>
+                                                <span className="task-title">
+                                                    {task.titulo}
+                                                    {task.admin_in && <span className="admin-icon">👤</span>}
+                                                    </span>
 
                                                 <div className="task-actions-right">
                                                     <div className="semaforo">
@@ -618,7 +629,10 @@ export default function Dashboard(){
                                                                                 ? "in-progress"
                                                                                 : "done"
                                                                         }`}
-                                                                        draggable={task.estado?.nombre !== "Finalizado"}
+                                                                        draggable={
+                                                                            task.estado?.nombre !== "Finalizado" &&
+                                                                            !task.admin_in
+                                                                        }
                                                                         onDragStart={(e) => {
                                                                             e.dataTransfer.setData("taskId", task.task_id.toString());
                                                                         }}
@@ -774,15 +788,19 @@ export default function Dashboard(){
 
                     <div className="task-actions">
                         <button className="btn-ia" disabled>Ayuda con IA</button>
-                        <button className="btn-update"
-                            onClick={() => {
-                                setTaskToEdit(selectedTask);
-                                setSelectedTask(null);
-                                setShowEditModal(true);
-                            }}
-                        >
-                            Actualizar
-                        </button>
+
+                        {!selectedTask.admin_in && (
+                            <button
+                                className="btn-update"
+                                onClick={() => {
+                                    setTaskToEdit(selectedTask);
+                                    setSelectedTask(null);
+                                    setShowEditModal(true);
+                                }}
+                            >
+                                Actualizar
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

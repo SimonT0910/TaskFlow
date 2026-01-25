@@ -6,7 +6,7 @@ usuario_id int primary key identity (1,1),
 nombre varchar(20) not null,
 apellido varchar (20) not null,
 email varchar (50) unique not null,
-contrasena varchar(100) unique not null,
+contrasena varchar(100) not null,
 fecha datetime default getdate(),
 );
 
@@ -28,8 +28,11 @@ fecha_estimada date,
 tiempo int,
 creado datetime default getdate(),
 actualizado datetime default getdate(),
+admin_in bit default 0,
+asignado int null,
 foreign key (usuario_id) references usuarios(usuario_id),
-foreign key (estado_id) references estados(estado_id)
+foreign key (estado_id) references estados(estado_id),
+foreign key (asignado) references usuarios(usuario_id)
 );
 
 create table calendario(
@@ -77,4 +80,12 @@ creado datetime default getdate(),
 foreign key (usuario_id) references usuarios(usuario_id)
 );
 
-select * from tasks
+create table admin (
+admin_id int identity primary key,
+usuario_id int not null,
+admin_contrasena varchar(100) not null,
+creado datetime default getdate(),
+foreign key (usuario_id) references usuarios(usuario_id)
+);
+
+select * from usuarios
