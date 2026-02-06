@@ -22,17 +22,18 @@ class TaskResponse(BaseModel):
     titulo: str
     descripcion: str
     estado: EstadoOut
-    prioridad: int
-    fecha_estimada: date | None
-    tiempo: int | None
-    asignado: bool
+    prioridad: Optional[int] = None
+    fecha_estimada: Optional[date] = None
+    tiempo: Optional[int] = None
+    asignado_id: Optional[int] = None
+    admin_id: Optional[int] = None
+    admin_in: bool
     creado: datetime
     actualizado: datetime
-    asignado: Optional[int] = None
-    admin_in: bool
-    
+
     class Config:
-        orm_mode = True
+        from_attributes = True
+    
         
 class EstadoOut(BaseModel):
     nombre: str

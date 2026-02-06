@@ -27,6 +27,10 @@ export default function Dashboard(){
     //Mensajes de error para fechas pasadas
     const [dateError, setDateError] = useState("");
 
+    //Estados para el modal de ingreso de administrador
+    const [showAdmin, setShowAdmin] = useState(false);
+    const [password, setPassword] = useState("");
+
     //Componentes para la actualizacion de las tareas
     const [showEditModal, setShowEditModal] = useState(false);
     const [taskToEdit, setTaskToEdit] = useState(null);
@@ -471,6 +475,35 @@ export default function Dashboard(){
         return selectedDate < getToday();
     }
 
+    //Función para poder ingresar al dashboard administrativo con la contraseña
+    const handleAdmin = async () => {
+        try{
+            const token = localStorage.getItem("token");
+
+            const response = await fetch("http://localhost:8000/admin/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    contraena: adminPassword
+                })
+            });
+
+            if (!response.ok) {
+                alert("Contraseña incorrecta");
+                return;
+            }
+
+            localStorage.setItem("is_admin", "true");
+            window.local.href = "/app";
+        } catch (error) {
+            console.error(error);
+            alert("Error validando administrador")
+        }
+    };
+
     return (
         <div className="dashboard-layout">
             <Header setActivePanel={setActivePanel}/>
@@ -559,7 +592,12 @@ export default function Dashboard(){
                                 </div>
 
                                 <div className="activities-footer">
-                                    <button className="manage-tasks-btn">
+                                    <button
+                                        className="manage-tasks-btn"
+                                        onClick={() => {
+                                            setShowAdmin(true);
+                                        }}
+                                    >
                                         Administrar tareas
                                     </button>
                                 </div>
@@ -874,6 +912,37 @@ export default function Dashboard(){
         {bulkDelete && (
             <div className="toast">
                 {bulkDelete}
+            </div>
+        )}
+
+        {showAdmin && (
+            <div className="modal-overlay">
+                <div className="modal">
+                    <h2>Acceso administrador</h2>
+
+                    <input
+                        type="password"
+                        placeholder="Contraseña del proyecto"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                    />
+
+                    <div className="modal-actions">
+                        <button
+                            className="cancel-btn"
+                            onClick={() => setShowAdmin(false)}
+                        >
+                            Cancelar
+                        </button>
+
+                        <button
+                            className="add-task-btn"
+                            onClick={handleAdmin}
+                        >
+                            Ingresar
+                        </button>
+                    </div>
+                </div>
             </div>
         )}
         </div>

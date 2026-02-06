@@ -42,6 +42,7 @@ def create_task(
         fecha_estimada = task.fecha_estimada,
         tiempo = task.tiempo,
         estado_id = estado_pendiente.estado_id,
+        admin_in=True,
         creado = datetime.now(),
         actualizado = datetime.now()
     )
@@ -82,12 +83,13 @@ def get_tasks(
             task_id=t.task_id,
             titulo=t.titulo,
             descripcion=t.descripcion,
-            estado={
-                "nombre": t.estado.nombre
-            },
+            estado=t.estado,
             prioridad=t.prioridad,
             fecha_estimada=t.fecha_estimada,
             tiempo=t.tiempo,
+            asignado_id=t.asignado_id,
+            admin_id=t.admin_id,
+            admin_in=t.admin_in,
             creado=t.creado,
             actualizado=t.actualizado
         )
@@ -121,7 +123,7 @@ def get_task_detail(
         task_id=tarea.task_id,
         titulo=tarea.titulo,
         descripcion=tarea.descripcion,
-        estado_id=tarea.estado.nombre,
+        estado={"nombre": tarea.estado.nombre},
         prioridad=tarea.prioridad,
         fecha_estimada=tarea.fecha_estimada,
         tiempo=tarea.tiempo,
@@ -150,7 +152,7 @@ def update_task(
         )
         
     #Si la tarea es del adminitrador
-    if Task.asignado:
+    if tarea.admin_in:
         raise HTTPException(status_code=403, detail="Las tareas asignadas por el administrador no pueden editarse")
         
     #2. Actualizar solo los campos enviados

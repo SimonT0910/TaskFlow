@@ -1,41 +1,113 @@
 //Nuevo dashboard para el administrador y sus respectivos procesos
 import React, { useEffect, useState } from "react";
-import "./Dashboard.css";
+import "../styles/dashboard.css";
+import Header from "../Components/Header";
 
 const DashboardAdmin = () => {
-    const [tasks, setTasks] = useState([]);
+    const token = localStorage.getItem("token");
+
+    const [activePanel, setActivePanel] = useState("actividades");
+    const [taskEnteringId, setTaskEnteringId] = useState(null);
+    const [animatingTaskId, setAnimatingTaskId] = useState(null);
+    const [completedTask, setCompletedTask] = useState(null);
+    const [dateError, setDateError] = useState("");
+
+    const [currentDate, setCurrentDate] = useState(new Date());
+
+    const months = [
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ];
+
+    const changeMonth = (direction) => {
+        const newDate = new Date(currentDate);
+        newDate.setMonth(currentDate.getMonth() + direction);
+        setCurrentDate(newDate);
+    };
+
+    const getTasksForDay = (date) => {
+        return tasks.filter(t =>
+            t.fecha_estimada &&
+            new Date(t.fecha_estimada).toDateString() === date.toDateString()
+        );
+    };
+
+    const handleTaskDrop = (taskId, date) => {
+        console.log("Tarea", taskId, "movida a", date);
+    };
+
+    const [taskData, setTaskData] = useState({
+        titulo: "",
+        descripcion: "",
+        prioridad: "2",
+        fecha_estimada: "",
+        tiempo: ""
+    });
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+
+        setTaskData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleSaveTask = () => {
+        if (!taskData.titulo || !taskData.fecha_estimada) {
+            setDateError("Título y fecha son obligatorios");
+            return;
+        }
+
+        setDateError("");
+        setShowTaskModal(false);
+    };
+
+    const texto = (p) => {
+        if (p === 1) return "Alta";
+        if (p === 2) return "Media";
+        return "Baja";
+    };
+
+    const fechaCambio = (fecha) => {
+        return new Date(fecha).toLocaleDateString();
+    };
+
+    const [tasks] = useState([]);
     const [selectedTask, setSelectedTask] = useState(null);
+    const [usuarios, setUsuarios] = useState([]);
 
-    const handleAdmin = async () => {
+    const [usuariosSeleccionados, setUsuariosSeleccionados] = useState([]);
+    const [showTaskModal, setShowTaskModal] = useState(false);
+
+    //Función para traer la lista de usuarios que hay en la pagina web
+    useEffect(() => {
+        fetch("http://localhost:8000/users", {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        .then(res => res.json())
+        .then(data => setUsuarios(data));
+    }, []);
+
+    //Función para cuando el administrador asigne las tareas a los usuarios
+    const handleAdminTask = async () => {
         try {
-            const token = localStorage.getItem("token");
-
-            const response = await fetch ("http://localhost:8000/tasks/admin", {
+            await fetch("http://localhost:8000/adminTask/create", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    titulo: taskData.titulo,
-                    descripcion: taskData.descripcion,
-                    prioridad: Number(taskData.prioridad),
-                    fecha_estimada: taskData.fecha_estimada,
-                    tiempo: Number(taskData.tiempo),
-                    usuario_id: selectedUser
+                    ...taskData,
+                    usuarios_asignados: usuariosSeleccionados
                 })
             });
 
-            if (!response.ok) {
-                throw new Error("Error creando tarea administrador");
-            }
-
-            const nuevo = await response.json();
-            setTasks(prev => [...prev, nuevo]);
             setShowTaskModal(false);
         } catch (error) {
             console.error(error);
-            alert("No se pudo crear la tarea del administrador")
+            alert("No se pudo crear la tarea");
         }
     };
 
@@ -251,6 +323,25 @@ const DashboardAdmin = () => {
                                     <p><b>Actualizado:</b> {fechaCambio(selectedTask.actualizado)}</p>
                                 </div>
                             </div>
+
+                                <select
+                                    multiple
+                                    onChange={(e) =>
+                                        setUsuariosSeleccionados(
+                                            [...e.target.selectedOptions].map(o => Number(o.value))
+                                        )
+                                    }
+                                >
+                                    {usuarios.map(u => (
+                                        <option key={u.usuario_id} value={u.usuario_id}>
+                                            {u.nombre}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                <button className="add-task-btn" onClick={handleAdminTask}>
+                                    Asignar
+                                </button>
                         </div>
                     )}
             </div>
