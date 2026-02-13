@@ -7,9 +7,6 @@ load_dotenv()
 
 app = FastAPI()
 
-app.include_router(auth.router)
-app.include_router(tasks.router)
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
@@ -17,6 +14,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth.router)
+app.include_router(tasks.router)
 
 @app.get("/")
 def root():

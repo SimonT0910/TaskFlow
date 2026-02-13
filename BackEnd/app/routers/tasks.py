@@ -3,13 +3,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime
 from app.database import get_db
-from app.models import Task, Estado, Usuario, Historial
+from app.models import Task, Estado, Usuario, Historial, Proyecto
 from app.schemas import TaskCreate
 from app.auth.dependencies import get_current_user
 from typing import List
 from app.schemas.task import TaskResponse
 from app.schemas.task import TaskUpdate
 from app.schemas.task import AdminTasks
+from app.core.security import verify_project_password
 
 router = APIRouter(
     prefix="/tasks",
@@ -22,7 +23,20 @@ def create_task(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):  
-    #1. Buscar el estado "Pendiente"
+    #1. Busca el proyecto
+    proyecto = (
+        db.query(Proyecto).filter(
+            Proyecto.nombre == "Proyecto General"
+        ).first()
+    )
+    
+    if not proyecto:
+        raise HTTPException(
+            status_code=500,
+            detail="Proyecto General no existe en la base de datos"
+        )
+        
+    #2. Buscar estado "Pendiente"
     estado_pendiente = (
         db.query(Estado).filter(Estado.nombre == "Pendiente").first()
     )
@@ -33,25 +47,27 @@ def create_task(
             detail="Estado 'Pendiente' no existe en la base de datos."
         )
     
-    #Crear la tarea
+    #3. Crear la tarea
     nueva_tarea = Task (
+        proyecto_id = proyecto.proyecto_id,
         usuario_id = current_user.usuario_id,
+        asignado = None,
         titulo = task.titulo,
         descripcion = task.descripcion,
         prioridad = task.prioridad,
         fecha_estimada = task.fecha_estimada,
         tiempo = task.tiempo,
         estado_id = estado_pendiente.estado_id,
-        admin_in=True,
+        admin_in = False,
         creado = datetime.now(),
         actualizado = datetime.now()
     )
     
-    #3. Guardar en la base de datos
     db.add(nueva_tarea)
     db.commit()
     db.refresh(nueva_tarea)
     
+    #4. Retornar respuesta estructurada
     return TaskResponse(
         task_id = nueva_tarea.task_id,
         titulo = nueva_tarea.titulo,
@@ -62,6 +78,7 @@ def create_task(
         prioridad = nueva_tarea.prioridad,
         fecha_estimada = nueva_tarea.fecha_estimada,
         tiempo = nueva_tarea.tiempo,
+        admin_in = nueva_tarea.admin_in,
         creado = nueva_tarea.creado,
         actualizado = nueva_tarea.actualizado
     )
@@ -74,7 +91,8 @@ def get_tasks(
 ):
     tareas = (
         db.query(Task)
-        .join(Estado).filter(Task.usuario_id == current_user.usuario_id)
+        .join(Estado).filter((Task.asignado_id == current_user.usuario_id) |
+        (Task.admin_id == current_user.usuario_id))
         .all()
     )
     
@@ -83,13 +101,13 @@ def get_tasks(
             task_id=t.task_id,
             titulo=t.titulo,
             descripcion=t.descripcion,
-            estado=t.estado,
+            estado={"nombre": t.estado.nombre},
             prioridad=t.prioridad,
             fecha_estimada=t.fecha_estimada,
             tiempo=t.tiempo,
+            proyecto_id=t.proyecto_id,
             asignado_id=t.asignado_id,
             admin_id=t.admin_id,
-            admin_in=t.admin_in,
             creado=t.creado,
             actualizado=t.actualizado
         )
@@ -319,6 +337,23 @@ def task_admin(
     db: Session = Depends(get_db),
     current_user: Usuario =  Depends(get_current_user)
 ):
+    #Buscar proyecto
+    proyecto = db.query(Proyecto).filter(
+        Proyecto.proyecto_id == task.proyecto_id    
+    ).first()
+    
+    if not proyecto:
+        raise HTTPException(404, "Proyecto no encontrado")
+    
+    #Validar que el usuario sea el administrador del proyecto
+    if proyecto.admin_usuario_id != current_user.usuario_id:
+        raise HTTPException(403, "No eres administrador de este proyecto")
+    
+    #Validar constraseña del proyecto
+    if not verify_project_password(task.admin_password, proyecto.admin_password_hash):
+        raise HTTPException(403, "Contraseña del proyecto incorrecta")
+    
+    #Crear tarea
     estado_pendiente = db.query(Estado).filter(
         Estado.nombre == "Pendiente"
     ).first()

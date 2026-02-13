@@ -22,14 +22,14 @@ export default function Dashboard(){
 
     //Control del mes y año en el calendario
     const [currentDate, setCurrentDate] = useState(new Date());
-    const [activePanel, setActivePanel] = useState(null);
+    const [adminPassword, setAdminPassword] = useState("");
+    const [activePanel, setActivePanel] = useState("actividades");
 
     //Mensajes de error para fechas pasadas
     const [dateError, setDateError] = useState("");
 
     //Estados para el modal de ingreso de administrador
     const [showAdmin, setShowAdmin] = useState(false);
-    const [password, setPassword] = useState("");
 
     //Componentes para la actualizacion de las tareas
     const [showEditModal, setShowEditModal] = useState(false);
@@ -43,16 +43,30 @@ export default function Dashboard(){
 
     //Traer las actividades para que se vean en el frontend
     useEffect(() => {
-        if (!token) return;
-
         fetch("http://localhost:8000/tasks/", {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
+            headers: { Authorization: `Bearer ${token}` }
         })
-        .then(res => res.json())
-        .then(data => setTasks(data))
-        .catch(err => console.error(err));
+            .then(res => res.json())
+            .then(data => {
+                console.log("Respuesta backend:", data);
+
+                //Si el backend devuelve { tasks: [...] }
+                if (Array.isArray(data.tasks)) {
+                    setTasks(data.tasks);
+                }
+                //Si devuelve directamente el array
+                else if (Array.isArray(data)) {
+                    setTasks(data);
+                }
+                //Si devuelve otra cosa
+                else {
+                    setTasks([]);
+                }
+            })
+            .catch(err => {
+                console.error("Error cargando tareas:", err);
+                setTasks([]);
+            });
     }, [token]);
 
     //Cuando se abre el modal de la actualizacion caraga los datos
@@ -409,7 +423,7 @@ export default function Dashboard(){
     const handleTaskDrop = async (taskId, date) => {
         try {
             const task = tasks.find(t => t.task_id === taskId);
-            if (task?.admin_in) {
+            if (task?.admin_id) {
                 alert("Esta tarea fue asignada por el administrador y no puede ser modificada");
                 return;
             }
@@ -487,7 +501,7 @@ export default function Dashboard(){
                     Authorization: `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    contraena: adminPassword
+                    admin_password: adminPassword
                 })
             });
 
@@ -497,7 +511,7 @@ export default function Dashboard(){
             }
 
             localStorage.setItem("is_admin", "true");
-            window.local.href = "/app";
+            window.location.href = "/app";
         } catch (error) {
             console.error(error);
             alert("Error validando administrador")
@@ -556,7 +570,7 @@ export default function Dashboard(){
                                             >
                                                 <span className="task-title">
                                                     {task.titulo}
-                                                    {task.admin_in && <span className="admin-icon">👤</span>}
+                                                    {task.admin_id && <span className="admin-icon">👤</span>}
                                                     </span>
 
                                                 <div className="task-actions-right">
@@ -669,7 +683,7 @@ export default function Dashboard(){
                                                                         }`}
                                                                         draggable={
                                                                             task.estado?.nombre !== "Finalizado" &&
-                                                                            !task.admin_in
+                                                                            !task.admin_id
                                                                         }
                                                                         onDragStart={(e) => {
                                                                             e.dataTransfer.setData("taskId", task.task_id.toString());
@@ -827,7 +841,7 @@ export default function Dashboard(){
                     <div className="task-actions">
                         <button className="btn-ia" disabled>Ayuda con IA</button>
 
-                        {!selectedTask.admin_in && (
+                        {!selectedTask.admin_id && (
                             <button
                                 className="btn-update"
                                 onClick={() => {
@@ -923,9 +937,10 @@ export default function Dashboard(){
                     <input
                         type="password"
                         placeholder="Contraseña del proyecto"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        value={adminPassword}
+                        onChange={(e) => setAdminPassword(e.target.value)}
                     />
+
 
                     <div className="modal-actions">
                         <button

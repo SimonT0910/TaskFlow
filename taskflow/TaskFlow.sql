@@ -9,7 +9,10 @@ create table usuarios (
     apellido varchar(20) not null,
     email varchar(50) unique not null,
     contrasena varchar(100) not null,
-    fecha datetime default getdate()
+    fecha datetime default getdate(),
+    password_hash varchar(255) not null default 'temp_hash',
+    activo bit not null default 1,
+    creado datetime default getdate()
 );
 
 --Tabla de estados
@@ -117,3 +120,5 @@ create table recomendacionesIA (
     creado datetime default getdate(),
     foreign key (usuario_id) references usuarios(usuario_id)
 );
+
+select * from tasks
