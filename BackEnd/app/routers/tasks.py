@@ -51,7 +51,7 @@ def create_task(
     nueva_tarea = Task (
         proyecto_id = proyecto.proyecto_id,
         usuario_id = current_user.usuario_id,
-        asignado = None,
+        asignado = current_user.usuario_id,
         titulo = task.titulo,
         descripcion = task.descripcion,
         prioridad = task.prioridad,
@@ -91,8 +91,8 @@ def get_tasks(
 ):
     tareas = (
         db.query(Task)
-        .join(Estado).filter((Task.asignado_id == current_user.usuario_id) |
-        (Task.admin_id == current_user.usuario_id))
+        .join(Estado).filter((Task.asignado == current_user.usuario_id) |
+        (Task.admin_in == current_user.usuario_id))
         .all()
     )
     
@@ -106,8 +106,8 @@ def get_tasks(
             fecha_estimada=t.fecha_estimada,
             tiempo=t.tiempo,
             proyecto_id=t.proyecto_id,
-            asignado_id=t.asignado_id,
-            admin_id=t.admin_id,
+            asignado=t.asignado,
+            admin_in=t.admin_in,
             creado=t.creado,
             actualizado=t.actualizado
         )

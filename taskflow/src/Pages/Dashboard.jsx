@@ -570,7 +570,7 @@ export default function Dashboard(){
                                             >
                                                 <span className="task-title">
                                                     {task.titulo}
-                                                    {task.admin_id && <span className="admin-icon">👤</span>}
+                                                    {task.admin_in && <span className="admin-icon">👤</span>}
                                                     </span>
 
                                                 <div className="task-actions-right">
@@ -683,7 +683,7 @@ export default function Dashboard(){
                                                                         }`}
                                                                         draggable={
                                                                             task.estado?.nombre !== "Finalizado" &&
-                                                                            !task.admin_id
+                                                                            !task.admin_in
                                                                         }
                                                                         onDragStart={(e) => {
                                                                             e.dataTransfer.setData("taskId", task.task_id.toString());
@@ -841,7 +841,7 @@ export default function Dashboard(){
                     <div className="task-actions">
                         <button className="btn-ia" disabled>Ayuda con IA</button>
 
-                        {!selectedTask.admin_id && (
+                        {!selectedTask.admin_in && (
                             <button
                                 className="btn-update"
                                 onClick={() => {

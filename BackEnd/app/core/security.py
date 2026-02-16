@@ -1,3 +1,4 @@
+#Esto sirve para poder proteger con hash la contraseña del administrador
 from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
